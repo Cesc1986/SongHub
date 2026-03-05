@@ -70,7 +70,7 @@ export default function Home(): JSX.Element {
     queryClient.setQueryData(['getBackgroundTab', url], fullTab)
     setImportedTab(fullTab)
     setSelectedTab((prev) => ({ ...prev, url, slug }))
-    router.push(`/tab/${slug}`)
+    window.location.href = `/tab/${slug}`
   }
 
   const handleDownload = (filename: string) => {
