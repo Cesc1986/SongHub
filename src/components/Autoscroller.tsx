@@ -16,118 +16,108 @@ interface AutoscrollerProps {
   bottomCSS: string
   isLoading: boolean
 }
+
+const MIN_SPEED = 10
+const MAX_SPEED = 300
+const STEP = 20
+const DEFAULT_SPEED = 50
+
 export default function Autoscroller({
   showAutoscroll,
   bottomCSS,
   isLoading,
 }: AutoscrollerProps): JSX.Element {
-  const widthToolsBar = useBreakpointValue({
-    base: '100%',
-    sm: '50%',
-  })
+  const widthToolsBar = useBreakpointValue({ base: '100%', sm: '50%' })
   const borderColor = useColorModeValue('gray.200', 'gray.600')
-  const [isScrolling, setIsScrolling] = useState<boolean>(
-    showAutoscroll ? true : false,
-  )
-  const [isEnabled, setIsEnabled] = useState<boolean>(
-    showAutoscroll ? true : false,
-  )
-  const [scrollSpeed, setScrollSpeed] = useState<number>(200000)
-  const requestAnimationFrameRef = useRef<number>(0)
-  const manualScrollintervalRef = useRef<NodeJS.Timeout>(null)
+
+  const [isEnabled, setIsEnabled] = useState<boolean>(showAutoscroll)
+  const [scrollSpeed, setScrollSpeed] = useState<number>(DEFAULT_SPEED)
+
+  const rafRef = useRef<number>(null)
+  const lastTimeRef = useRef<number>(null)
+  const scrollSpeedRef = useRef<number>(DEFAULT_SPEED)
+  const isEnabledRef = useRef<boolean>(showAutoscroll)
+  const manualTimerRef = useRef<NodeJS.Timeout>(null)
 
   if (typeof document !== 'undefined') {
     var isTouch = 'ontouchstart' in document.documentElement
   }
 
-  const formatSpeed = (scrollSpeed: number) => {
-    const base100 = 200000
-    const percent = base100 / scrollSpeed
-    return Math.round(percent * 100)
+  // Keep refs in sync
+  useEffect(() => {
+    scrollSpeedRef.current = scrollSpeed
+  }, [scrollSpeed])
+
+  useEffect(() => {
+    isEnabledRef.current = isEnabled
+  }, [isEnabled])
+
+  const stopScroll = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    lastTimeRef.current = null
   }
 
-  const handlePlayButton = () => {
-    setIsScrolling((isScrolling) => !isScrolling)
-    setIsEnabled((isEnabled) => !isEnabled)
-  }
-
-  const resetRequestAnimationFrame = () => {
-    cancelAnimationFrame(requestAnimationFrameRef.current)
-    requestAnimationFrameRef.current = null
+  const startScroll = () => {
+    stopScroll()
+    const step = (timestamp: number) => {
+      if (!lastTimeRef.current) {
+        lastTimeRef.current = timestamp
+      }
+      const delta = (timestamp - lastTimeRef.current) / 1000
+      lastTimeRef.current = timestamp
+      window.scrollBy(0, scrollSpeedRef.current * delta)
+      const atBottom =
+        window.scrollY + window.innerHeight >= document.body.scrollHeight - 2
+      if (!atBottom) {
+        rafRef.current = requestAnimationFrame(step)
+      } else {
+        rafRef.current = null
+      }
+    }
+    rafRef.current = requestAnimationFrame(step)
   }
 
   useEffect(() => {
-    setIsScrolling(showAutoscroll)
     setIsEnabled(showAutoscroll)
   }, [showAutoscroll])
 
   useEffect(() => {
-    if (!isScrolling && requestAnimationFrameRef.current !== 0) {
-      resetRequestAnimationFrame()
-      return
+    if (isEnabled) {
+      startScroll()
+    } else {
+      stopScroll()
     }
-    const currentPos = window.pageYOffset
-    let start = null
-    const pos = document.querySelector('body').offsetHeight
-
-    requestAnimationFrameRef.current = window.requestAnimationFrame(
-      function step(currentTime) {
-        if (!isScrolling) {
-          resetRequestAnimationFrame()
-          return
-        }
-        start = !start ? currentTime : start
-        var progress = currentTime - start
-        if (currentPos < pos) {
-          window.scrollTo(
-            0,
-            ((pos - currentPos) * progress) / scrollSpeed + currentPos,
-          )
-        } else {
-          window.scrollTo(
-            0,
-            currentPos - ((currentPos - pos) * progress) / scrollSpeed,
-          )
-        }
-        if (progress < scrollSpeed) {
-          requestAnimationFrameRef.current = window.requestAnimationFrame(step)
-        } else {
-          window.scrollTo(0, pos)
-        }
-      },
-    )
-  }, [isScrolling, scrollSpeed])
-
-  useEffect(() => {
-    return () => {
-      if (requestAnimationFrameRef.current !== 0) {
-        resetRequestAnimationFrame()
-        return
-      }
-    }
-  }, [])
+    return stopScroll
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEnabled])
 
   useEffect(() => {
     const handleManualScroll = () => {
-      if (isEnabled) {
-        setIsScrolling(false)
-        resetRequestAnimationFrame()
-        manualScrollintervalRef.current = setTimeout(() => {
-          setIsScrolling(true)
-        }, 400)
-      } else {
-        resetRequestAnimationFrame()
-      }
+      if (!isEnabledRef.current) return
+      stopScroll()
+      clearTimeout(manualTimerRef.current)
+      manualTimerRef.current = setTimeout(() => {
+        if (isEnabledRef.current) startScroll()
+      }, 600)
     }
-    ;['mousewheel', 'touchstart'].forEach((evt) =>
-      window.addEventListener(evt, handleManualScroll),
+    const events = ['wheel', 'touchstart']
+    events.forEach((evt) =>
+      window.addEventListener(evt, handleManualScroll, { passive: true }),
     )
     return () => {
-      ;['mousewheel', 'touchstart'].forEach((evt) =>
+      events.forEach((evt) =>
         window.removeEventListener(evt, handleManualScroll),
       )
     }
-  }, [isEnabled, isScrolling, scrollSpeed])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handlePlayButton = () => {
+    setIsEnabled((prev) => !prev)
+  }
 
   return (
     <>
@@ -151,20 +141,12 @@ export default function Autoscroller({
           display={isLoading ? 'none' : 'flex'}
         >
           <Text px={1} fontSize="xs">
-            {' '}
             Autoscroll
           </Text>
           <Button
             variant="outline"
-            _hover={{
-              bg: 'blue.400',
-              color: 'white',
-              opacity: isEnabled ? 0.8 : 1,
-            }}
-            _active={{
-              bg: 'fadebp',
-              color: 'white',
-            }}
+            _hover={{ bg: 'blue.400', color: 'white' }}
+            _active={{ bg: 'fadebp', color: 'white' }}
             isActive={isEnabled}
             onTouchStart={handlePlayButton}
             onMouseDown={!isTouch ? handlePlayButton : undefined}
@@ -178,53 +160,34 @@ export default function Autoscroller({
             {isEnabled ? 'Stop' : 'Start'}
           </Button>
           <Text px={1} fontSize="sm">
-            {' '}
-            Speed : {formatSpeed(scrollSpeed)}%
+            {scrollSpeed} px/s
           </Text>
           <Flex>
             <IconButton
               variant="outline"
-              _hover={{
-                bg: 'blue.400',
-                color: 'white',
-              }}
+              _hover={{ bg: 'blue.400', color: 'white' }}
               size={'sm'}
               boxShadow="md"
-              fontWeight={'normal'}
               px="3"
               py="4"
               mr={1}
-              onClick={() => {
-                const savedIsScrolling = isScrolling
-                setIsScrolling(false)
-                resetRequestAnimationFrame()
-                setScrollSpeed((prevSpeed) => prevSpeed + 10000)
-                setIsScrolling(savedIsScrolling)
-              }}
-              aria-label="Reduce speed"
+              onClick={() =>
+                setScrollSpeed((s) => Math.max(s - STEP, MIN_SPEED))
+              }
+              aria-label="Slower"
               icon={<MinusIcon />}
             />
             <IconButton
               variant="outline"
-              _hover={{
-                bg: 'blue.400',
-                color: 'white',
-              }}
+              _hover={{ bg: 'blue.400', color: 'white' }}
               size={'sm'}
               boxShadow="md"
-              fontWeight={'normal'}
               px="3"
               py="4"
-              onClick={() => {
-                const savedIsScrolling = isScrolling
-                setIsScrolling(false)
-                resetRequestAnimationFrame()
-                setScrollSpeed((prevSpeed) =>
-                  Math.max(prevSpeed - 10000, 50000),
-                )
-                setIsScrolling(savedIsScrolling)
-              }}
-              aria-label="Increase speed"
+              onClick={() =>
+                setScrollSpeed((s) => Math.min(s + STEP, MAX_SPEED))
+              }
+              aria-label="Faster"
               icon={<AddIcon />}
             />
           </Flex>
