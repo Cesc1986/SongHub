@@ -31,7 +31,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
             <Head>
               <meta
                 name="viewport"
-                content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+                content="width=device-width, initial-scale=0.85, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes"
               />
             </Head>
             <GoogleAnalytics trackPageViews strategy="lazyOnload" />
