@@ -50,7 +50,9 @@ COPY --from=builder /app/src ./src
 COPY start.sh ./start.sh
 RUN chmod +x start.sh
 
-RUN mkdir -p /app/saved-tabs
+RUN mkdir -p /app/saved-tabs && \
+    ln -sf /usr/bin/chromium /usr/bin/chromium-browser && \
+    ln -sf /usr/bin/chromium /usr/bin/google-chrome
 
 EXPOSE 3005
 

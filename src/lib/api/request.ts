@@ -121,8 +121,13 @@ export function formatSearchQuery(args: ApiArgsSearch): ApiArgsSearch {
 export async function getPuppeteerConf(
   options: PuppeteerOptions = {},
 ): Promise<{ page: Page; browser: any }> {
+  // In Docker/Linux, Chromium may be at a non-standard path
+  const chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH ||
+    (process.platform === 'linux' ? '/usr/bin/chromium' : undefined)
+
   const { browser, page }: { browser: Browser; page: Page } = await connect({
     headless: false,
+    customConfig: chromiumPath ? { chromePath: chromiumPath } : {},
     args: [
       '--autoplay-policy=user-gesture-required',
       '--disable-background-networking',
