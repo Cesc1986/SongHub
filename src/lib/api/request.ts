@@ -118,63 +118,76 @@ export function formatSearchQuery(args: ApiArgsSearch): ApiArgsSearch {
 }
 
 //Using puppeteer@6.0 and chrome-aws-lambda@6.0 to not exceed the AWS 50mb limit for the serverless functions
+
+// Singleton browser instance — started once, reused for all requests
+let sharedBrowser: any = null
+let browserLock = false
+
+async function getSharedBrowser(): Promise<any> {
+  // If browser exists and is connected, return it
+  if (sharedBrowser) {
+    try {
+      await sharedBrowser.pages() // test if still alive
+      return sharedBrowser
+    } catch {
+      sharedBrowser = null
+    }
+  }
+
+  // Wait if another request is starting the browser
+  while (browserLock) {
+    await new Promise(r => setTimeout(r, 100))
+  }
+  if (sharedBrowser) return sharedBrowser
+
+  browserLock = true
+  try {
+    const chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH ||
+      (process.platform === 'linux' ? '/usr/bin/chromium' : undefined)
+
+    const { browser } = await connect({
+      headless: false,
+      customConfig: chromiumPath ? { chromePath: chromiumPath } : {},
+      args: [
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--disable-hang-monitor',
+        '--disable-notifications',
+        '--disable-popup-blocking',
+        '--disable-setuid-sandbox',
+        '--disable-sync',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-first-run',
+        '--no-sandbox',
+        '--no-zygote',
+        '--password-store=basic',
+        '--use-gl=swiftshader',
+      ],
+      turnstile: true,
+    })
+    sharedBrowser = browser
+    return browser
+  } finally {
+    browserLock = false
+  }
+}
+
 export async function getPuppeteerConf(
   options: PuppeteerOptions = {},
 ): Promise<{ page: Page; browser: any }> {
-  // In Docker/Linux, Chromium may be at a non-standard path
-  const chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH ||
-    (process.platform === 'linux' ? '/usr/bin/chromium' : undefined)
+  const browser = await getSharedBrowser()
+  const page: Page = await browser.newPage()
 
-  const { browser, page }: { browser: Browser; page: Page } = await connect({
-    headless: false,
-    customConfig: chromiumPath ? { chromePath: chromiumPath } : {},
-    args: [
-      '--autoplay-policy=user-gesture-required',
-      '--disable-background-networking',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-breakpad',
-      '--disable-client-side-phishing-detection',
-      '--disable-component-update',
-      '--disable-default-apps',
-      '--disable-dev-shm-usage',
-      '--disable-domain-reliability',
-      '--disable-extensions',
-      '--disable-features=AudioServiceOutOfProcess',
-      '--disable-hang-monitor',
-      '--disable-ipc-flooding-protection',
-      '--disable-notifications',
-      '--disable-offer-store-unmasked-wallet-cards',
-      '--disable-popup-blocking',
-      '--disable-print-preview',
-      '--disable-prompt-on-repost',
-      '--disable-renderer-backgrounding',
-      '--disable-setuid-sandbox',
-      '--disable-speech-api',
-      '--disable-sync',
-      '--hide-scrollbars',
-      '--ignore-gpu-blacklist',
-      '--metrics-recording-only',
-      '--mute-audio',
-      '--no-default-browser-check',
-      '--no-first-run',
-      '--no-pings',
-      '--no-sandbox',
-      '--no-zygote',
-      '--password-store=basic',
-      '--use-gl=swiftshader',
-      '--use-mock-keychain',
-    ],
-    turnstile: true,
-  })
-
-  page.setViewport(
+  await page.setViewport(
     options.widthBrowser && options.heightBrowser
       ? {
           width: parseInt(options.widthBrowser) - 50,
           height: parseInt(options.heightBrowser),
         }
-      : null,
+      : { width: 1280, height: 800 },
   )
   // Block every ressources that we don't need to load
   page.setDefaultNavigationTimeout(10000)
