@@ -36,6 +36,7 @@ export default function Autoscroller({
 
   const rafRef = useRef<number>(null)
   const lastTimeRef = useRef<number>(null)
+  const accumulatedRef = useRef<number>(0) // fractional pixel accumulator
   const scrollSpeedRef = useRef<number>(DEFAULT_SPEED)
   const isEnabledRef = useRef<boolean>(showAutoscroll)
   const manualTimerRef = useRef<NodeJS.Timeout>(null)
@@ -59,6 +60,7 @@ export default function Autoscroller({
       rafRef.current = null
     }
     lastTimeRef.current = null
+    accumulatedRef.current = 0
   }
 
   const startScroll = () => {
@@ -69,7 +71,15 @@ export default function Autoscroller({
       }
       const delta = (timestamp - lastTimeRef.current) / 1000
       lastTimeRef.current = timestamp
-      window.scrollBy(0, scrollSpeedRef.current * delta)
+
+      // Accumulate fractional pixels to avoid sub-pixel rounding to 0
+      accumulatedRef.current += scrollSpeedRef.current * delta
+      const px = Math.floor(accumulatedRef.current)
+      if (px >= 1) {
+        window.scrollBy(0, px)
+        accumulatedRef.current -= px
+      }
+
       const atBottom =
         window.scrollY + window.innerHeight >= document.body.scrollHeight - 2
       if (!atBottom) {
