@@ -65,11 +65,10 @@ export default function Home(): JSX.Element {
     const url = `https://tabs.ultimate-guitar.com/tab/${slug}`
     fullTab.url = url
     fullTab.slug = slug
-    setImportedTab(null)
-    queryClient.setQueryData(['getTab', url], fullTab)
-    queryClient.setQueryData(['getBackgroundTab', url], fullTab)
-    setImportedTab(fullTab)
-    setSelectedTab((prev) => ({ ...prev, url, slug }))
+    // Store in sessionStorage so /tab/[slug] can load instantly without Puppeteer
+    try {
+      sessionStorage.setItem('savedTabCache', JSON.stringify({ url, tab: fullTab }))
+    } catch {}
     window.location.href = `/tab/${slug}`
   }
 
