@@ -96,25 +96,27 @@ export default function TabPanel({
           isLoaded={!isLoading}
         >
           <Flex justifyContent={'space-between'} alignItems={'center'}>
-            <Flex alignItems={'center'} pb={0}>
+            <Flex alignItems={'center'} pb={0} flex={1} minW={0} mr={2}>
               <Flex
                 alignItems={'baseline'}
-                flexDirection={flexSongNameDirection as 'row' | 'column'}
+                flexDirection={'row'}
                 py={1}
+                flexWrap={'nowrap'}
+                minW={0}
+                overflow={'hidden'}
               >
-                <Text fontSize={'lg'} as="b" mr={1}>
+                <Text fontSize={'lg'} as="b" mr={1} whiteSpace={'nowrap'}>
                   {selectedTabContent?.artist}
-                </Text>{' '}
-                <Text fontSize={'md'}>{selectedTabContent?.name}</Text>
+                </Text>
+                <Text fontSize={'md'} whiteSpace={'nowrap'} overflow={'hidden'} textOverflow={'ellipsis'}>
+                  {selectedTabContent?.name}
+                </Text>
               </Flex>
             </Flex>
-            <Flex fontSize={'sm'} justifyContent={'start'} alignItems={'center'} gap={2}>
-              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+            <Flex flexDirection={'column'} alignItems={'center'} gap={1} flexShrink={0}>
               <Tooltip
-                placement="right"
-                label={
-                  isFavorite ? 'Remove from favorites' : 'Add to favorites'
-                }
+                placement="left"
+                label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 <IconButton
                   icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
@@ -125,6 +127,7 @@ export default function TabPanel({
                   size={'md'}
                 />
               </Tooltip>
+              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
             </Flex>
           </Flex>
           <Flex alignItems={'center'} justifyContent={'space-between'} py={1}>
@@ -304,17 +307,10 @@ export default function TabPanel({
         </Skeleton>
       </Flex>
       <ChordDiagram chords={chordsDiagrams} />
-      <BackingtrackPlayer
-        showBackingTrack={showBackingTrack}
-        setShowBackingTrack={setShowBackingTrack}
-        isLoading={isLoading}
-        artist={selectedTabContent?.artist}
-        songName={selectedTabContent?.name}
-      />
       <Autoscroller
         showAutoscroll={showAutoscroll}
         isLoading={isLoading}
-        bottomCSS={showBackingTrack ? '87px' : '17px'}
+        bottomCSS={'17px'}
       />
     </>
   )
