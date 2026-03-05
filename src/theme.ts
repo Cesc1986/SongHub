@@ -18,6 +18,27 @@ export const extendedTheme = extendTheme({
       'pre, code': {
         fontFamily: `'Poppins Mono', monospace !important`,
       },
+      // Mobile responsive tab content
+      'pre': {
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+        overflowX: 'auto',
+        maxWidth: '100%',
+      },
+      '[data-tab-content="true"]': {
+        overflowX: 'auto',
+        maxWidth: '100%',
+      },
+      '@media (max-width: 480px)': {
+        '[data-tab-content="true"]': {
+          fontSize: '0.65rem !important',
+        },
+      },
+      '@media (min-width: 481px) and (max-width: 768px)': {
+        '[data-tab-content="true"]': {
+          fontSize: '0.75rem !important',
+        },
+      },
       '.PlayerRSWP': {
         bgColor: props.colorMode === 'dark' && '#1a202c !important',
       },
