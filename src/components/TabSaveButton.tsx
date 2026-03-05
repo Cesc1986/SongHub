@@ -16,11 +16,8 @@ export default function TabSaveButton({ tab, isLoading }: TabSaveButtonProps): J
     if (!tab) return
     setIsSaving(true)
     try {
-      // Capture current DOM state — includes transposed chord text
-      const tabContentEl = document.querySelector('[data-tab-content="true"]') as HTMLElement
-      const currentHtml = tabContentEl ? tabContentEl.innerHTML : tab.htmlTab
-
-      // Build transposed chordsDiagrams by reading current chord names from DOM
+      // Always save the original htmlTab (viewport-independent)
+      // Only read chord names from DOM to capture transposition state
       let savedChords = tab.chordsDiagrams
       if (tab.chordsDiagrams) {
         const chordSpans = document.querySelectorAll('span.js-chord-chord')
@@ -37,9 +34,30 @@ export default function TabSaveButton({ tab, isLoading }: TabSaveButtonProps): J
         }
       }
 
+      // Build transposed htmlTab: replace chord spans in original HTML with transposed names
+      let htmlTabToSave = tab.htmlTab
+      if (tab.chordsDiagrams && savedChords) {
+        const originalKeys = Object.keys(tab.chordsDiagrams)
+        const transposedKeys = Object.keys(savedChords as unknown as Record<string, unknown>)
+        if (originalKeys.length === transposedKeys.length) {
+          let html = tab.htmlTab
+          originalKeys.forEach((orig, i) => {
+            const transposed = transposedKeys[i]
+            if (orig !== transposed) {
+              // Replace chord name inside js-chord-chord spans
+              html = html.replace(
+                new RegExp(`(<span[^>]*js-chord-chord[^>]*>)${orig.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(<\/span>)`, 'g'),
+                `$1${transposed}$2`
+              )
+            }
+          })
+          htmlTabToSave = html
+        }
+      }
+
       const tabToSave: Tab = {
         ...tab,
-        htmlTab: currentHtml,
+        htmlTab: htmlTabToSave,
         chordsDiagrams: savedChords,
       }
 
