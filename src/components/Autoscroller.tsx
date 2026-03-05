@@ -17,10 +17,11 @@ interface AutoscrollerProps {
   isLoading: boolean
 }
 
-const MIN_SPEED = 5
+const MIN_SPEED = 2
 const MAX_SPEED = 100
-const STEP = 5
-const DEFAULT_SPEED = 20
+const STEP_DOWN = 3
+const STEP_UP = 5
+const DEFAULT_SPEED = 10
 
 export default function Autoscroller({
   showAutoscroll,
@@ -172,7 +173,7 @@ export default function Autoscroller({
               py="4"
               mr={1}
               onClick={() =>
-                setScrollSpeed((s) => Math.max(s - STEP, MIN_SPEED))
+                setScrollSpeed((s) => Math.max(s - STEP_DOWN, MIN_SPEED))
               }
               aria-label="Slower"
               icon={<MinusIcon />}
@@ -185,7 +186,7 @@ export default function Autoscroller({
               px="3"
               py="4"
               onClick={() =>
-                setScrollSpeed((s) => Math.min(s + STEP, MAX_SPEED))
+                setScrollSpeed((s) => Math.min(s + STEP_UP, MAX_SPEED))
               }
               aria-label="Faster"
               icon={<AddIcon />}
