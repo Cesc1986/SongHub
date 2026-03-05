@@ -95,45 +95,18 @@ export default function TabPanel({
           h="100%"
           isLoaded={!isLoading}
         >
-          <Flex justifyContent={'space-between'} alignItems={'center'}>
-            <Flex alignItems={'center'} pb={0} flex={1} minW={0} mr={2}>
-              <Flex
-                alignItems={'baseline'}
-                flexDirection={'row'}
-                py={1}
-                flexWrap={'nowrap'}
-                minW={0}
-                overflow={'hidden'}
-              >
-                <Text fontSize={'lg'} as="b" mr={1} whiteSpace={'nowrap'}>
-                  {selectedTabContent?.artist}
-                </Text>
-                <Text fontSize={'md'} whiteSpace={'nowrap'} overflow={'hidden'} textOverflow={'ellipsis'}>
-                  {selectedTabContent?.name}
-                </Text>
-              </Flex>
-            </Flex>
-            <Flex flexDirection={'column'} alignItems={'center'} gap={1} flexShrink={0}>
-              <Tooltip
-                placement="left"
-                label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                <IconButton
-                  icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
-                  onClick={handleClickFavorite}
-                  colorScheme={isFavorite ? 'red' : 'gray'}
-                  variant="ghost"
-                  aria-label="Add to favorites"
-                  size={'md'}
-                />
-              </Tooltip>
-              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
-            </Flex>
+          {/* Row 1: Artist + Title — full width */}
+          <Flex alignItems={'baseline'} flexDirection={'row'} py={1} flexWrap={'nowrap'} minW={0} overflow={'hidden'} width={'100%'}>
+            <Text fontSize={'lg'} as="b" mr={1} whiteSpace={'nowrap'} flexShrink={0}>
+              {selectedTabContent?.artist}
+            </Text>
+            <Text fontSize={'md'} whiteSpace={'nowrap'} overflow={'hidden'} textOverflow={'ellipsis'} flex={1} minW={0}>
+              {selectedTabContent?.name}
+            </Text>
           </Flex>
-          <Flex alignItems={'center'} justifyContent={'space-between'} py={1}>
-            {
-              // Hack with top and relative position to make the star icon perfectly vertically aligned
-            }
+
+          {/* Row 2: Rating left — Heart + Save right */}
+          <Flex justifyContent={'space-between'} alignItems={'center'} py={1}>
             <Flex alignItems={'center'}>
               <StarIcon
                 fontSize={'sm'}
@@ -198,6 +171,20 @@ export default function TabPanel({
                 </MenuList>
               </Menu>
             )}
+            {/* Heart + Save — right side of row 2 */}
+            <Flex alignItems={'center'} gap={1} flexShrink={0}>
+              <Tooltip placement="left" label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                <IconButton
+                  icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
+                  onClick={handleClickFavorite}
+                  colorScheme={isFavorite ? 'red' : 'gray'}
+                  variant="ghost"
+                  aria-label="Add to favorites"
+                  size={'sm'}
+                />
+              </Tooltip>
+              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+            </Flex>
           </Flex>
           <Flex justifyContent={'space-between'} flexDirection={'row'}>
             <Flex fontSize={'sm'} py={2}>

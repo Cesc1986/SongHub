@@ -1,4 +1,4 @@
-import { Text, Stack, Divider, Link, IconButton, Flex } from '@chakra-ui/react'
+import { Text, Divider, Link, IconButton, Flex } from '@chakra-ui/react'
 import { FaGithub } from 'react-icons/fa'
 
 export default function Nav({}: {}): JSX.Element {
@@ -6,47 +6,37 @@ export default function Nav({}: {}): JSX.Element {
   return (
     <footer>
       <Divider mt={4} />
-
       <Flex
         direction={'row'}
         justifyContent="space-between"
         alignItems={'center'}
-        p={2}
-        flexWrap="wrap"
-        gap={1}
+        px={3}
+        py={2}
+        flexWrap={'nowrap'}
+        gap={2}
+        minW={0}
       >
-        <Text fontSize="sm">
-          Built by{' '}
-          <Link
-            href="https://github.com/Cesc1986/"
-            textDecoration="underline"
-            _hover={{ textDecoration: 'underline' }}
-            isExternal
-          >
+        <Text fontSize="xs" whiteSpace={'nowrap'} overflow={'hidden'} textOverflow={'ellipsis'} flex={1} minW={0}>
+          {'By '}
+          <Link href="https://github.com/Cesc1986/" isExternal textDecoration="underline">
             Francis
           </Link>
-          {' · '}Based on{' '}
-          <Link
-            href="https://github.com/BenoitBellegarde/UltimateTab"
-            textDecoration="underline"
-            _hover={{ textDecoration: 'underline' }}
-            isExternal
-          >
+          {' · Based on '}
+          <Link href="https://github.com/BenoitBellegarde/UltimateTab" isExternal textDecoration="underline">
             Benoit Bellegarde
           </Link>
         </Text>
 
-        <Flex direction={'row'} alignItems={'center'}>
-          <Text fontSize="sm" mr={2}>
+        <Flex direction={'row'} alignItems={'center'} gap={2} flexShrink={0}>
+          <Text fontSize="xs" whiteSpace={'nowrap'}>
             ver {version}
           </Text>
           <IconButton
-            size={'sm'}
-            key={'github-icon'}
+            size={'xs'}
             as={Link}
             isExternal
             href={'https://github.com/Cesc1986/UltimateTab/'}
-            aria-label={'Github page'}
+            aria-label={'Github'}
             bg={'blackAlpha.800'}
             color={'white'}
             icon={<FaGithub />}
