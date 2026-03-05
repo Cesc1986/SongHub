@@ -41,6 +41,8 @@ interface AppState {
   isLoadingTabList: boolean
   isErrorTabList: boolean
   dataTabList: ApiResponseSearch
+  importedTab: Tab | null
+  setImportedTab: Dispatch<SetStateAction<Tab | null>>
 }
 export const AppStateContext = createContext<AppState | null>(null)
 
@@ -66,6 +68,7 @@ export function AppStateProvider({ children }) {
     'tabFontSize',
     100,
   )
+  const [importedTab, setImportedTab] = useState<Tab | null>(null)
   const [widthBrowser, heightBrowser] = useWindowSize()
 
   const toast = useToast()
@@ -73,12 +76,12 @@ export function AppStateProvider({ children }) {
     isLoading: isLoadingTab,
     data: selectedTabContent,
     refetch: refetchTab,
-  } = useTabs(selectedTab.url, tabFontSize, widthBrowser)
+  } = useTabs(selectedTab.url, tabFontSize, widthBrowser, importedTab)
 
   const {
     isLoading: isLoadingTabBackground,
     data: selectedTabContentBackground,
-  } = useBackgroundTabs(selectedTab.url, tabFontSize, widthBrowser)
+  } = useBackgroundTabs(selectedTab.url, tabFontSize, widthBrowser, importedTab)
 
   const {
     isLoading: isLoadingTabList,
@@ -143,6 +146,8 @@ export function AppStateProvider({ children }) {
         isLoadingTabList,
         isErrorTabList,
         dataTabList,
+        importedTab,
+        setImportedTab,
       }}
     >
       {children}

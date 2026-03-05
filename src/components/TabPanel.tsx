@@ -34,6 +34,7 @@ import Autoscroller from './Autoscroller'
 import useAppStateContext from '../hooks/useAppStateContext'
 import FontSizeManager from './FontSizeManager'
 import TabActionButtons from './TabActionButtons'
+import TabSaveButton from './TabSaveButton'
 
 interface TabPanelProps {
   selectedTab: Tab
@@ -107,7 +108,8 @@ export default function TabPanel({
                 <Text fontSize={'md'}>{selectedTabContent?.name}</Text>
               </Flex>
             </Flex>
-            <Flex fontSize={'sm'} justifyContent={'start'}>
+            <Flex fontSize={'sm'} justifyContent={'start'} alignItems={'center'} gap={2}>
+              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
               <Tooltip
                 placement="right"
                 label={
@@ -295,6 +297,7 @@ export default function TabPanel({
             h={'100%'}
             w="100%"
             fontSize={`${tabFontSize / 100}rem !important`}
+            data-tab-content="true"
           >
             {selectedTabContent && HTMLReactParser(selectedTabContent?.htmlTab)}
           </Flex>

@@ -7,11 +7,17 @@ import {
   Text,
   Link,
   useBreakpointValue,
+  Menu,
+  MenuButton,
+  MenuList,
+  IconButton,
 } from '@chakra-ui/react'
-import { MoonIcon, SunIcon } from '@chakra-ui/icons'
+import { HamburgerIcon, MoonIcon, SunIcon } from '@chakra-ui/icons'
 import NextLink from 'next/link'
 import { MutableRefObject } from 'react'
 import AutocompleteInput from './AutocompleteInput'
+import TabImporter from './TabImporter'
+
 export default function Nav({
   refBackdrop,
 }: {
@@ -41,13 +47,25 @@ export default function Nav({
             <AutocompleteInput refBackdrop={refBackdrop} />
           </Flex>
           <Flex alignItems={'center'}>
-            <Stack direction={'row'} spacing={7}>
+            <Stack direction={'row'} spacing={3}>
               <Button
                 size={useBreakpointValue({ base: 'sm', md: 'md' })}
                 onClick={toggleColorMode}
               >
                 {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
               </Button>
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  aria-label="Menü"
+                  icon={<HamburgerIcon />}
+                  size={useBreakpointValue({ base: 'sm', md: 'md' })}
+                  variant="outline"
+                />
+                <MenuList>
+                  <TabImporter />
+                </MenuList>
+              </Menu>
             </Stack>
           </Flex>
         </Flex>

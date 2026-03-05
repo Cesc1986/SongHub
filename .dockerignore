@@ -1,0 +1,6 @@
+.git
+.next
+node_modules
+saved-tabs
+*.log
+.env*.local

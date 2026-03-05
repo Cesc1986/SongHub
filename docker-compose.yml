@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ultimatetab:
+    build: .
+    container_name: ultimatetab
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    volumes:
+      # Saved tabs persist outside the container
+      - ./saved-tabs:/app/saved-tabs
+    environment:
+      - NODE_ENV=production
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+      - DISPLAY=:99

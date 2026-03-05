@@ -3,126 +3,195 @@ import {
   Text,
   Heading,
   Stack,
-  useBreakpointValue,
   Button,
-  Image,
   Fade,
+  Box,
+  Badge,
+  IconButton,
+  Divider,
+  useToast,
+  useColorModeValue,
+  Spinner,
+  Input,
+  InputGroup,
+  InputLeftElement,
 } from '@chakra-ui/react'
 import Head from 'next/head'
-import { FaGithub } from 'react-icons/fa'
+import { FiDownload, FiTrash2, FiSearch } from 'react-icons/fi'
 import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { useQueryClient } from 'react-query'
+import useAppStateContext from '../hooks/useAppStateContext'
+
+interface SavedTabMeta {
+  filename: string
+  savedAt: string
+  artist: string
+  name: string
+  type: string
+  slug: string
+  url: string
+  error?: boolean
+}
 
 export default function Home(): JSX.Element {
   const router = useRouter()
+  const toast = useToast()
+  const queryClient = useQueryClient()
+  const { setSelectedTab, setImportedTab } = useAppStateContext()
+  const [savedTabs, setSavedTabs] = useState<SavedTabMeta[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const borderColor = useColorModeValue('gray.200', 'gray.700')
+  const hoverBg = useColorModeValue('gray.50', 'gray.700')
+
+  const fetchSavedTabs = async () => {
+    setLoading(true)
+    const res = await fetch('/api/saved-tabs')
+    const data = await res.json()
+    setSavedTabs(data.tabs || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchSavedTabs() }, [])
+
+  const handleOpen = async (tab: SavedTabMeta) => {
+    const res = await fetch(`/api/download-tab?filename=${encodeURIComponent(tab.filename)}`)
+    const parsed = await res.json()
+    const fullTab = parsed.tab
+    if (!fullTab) return
+    // Fix slug: remove leading 'tab/' if present (avoid double tab/tab/ in URL)
+    const slug = (fullTab.slug || '').replace(/^tab\//, '')
+    const url = `https://tabs.ultimate-guitar.com/tab/${slug}`
+    fullTab.url = url
+    fullTab.slug = slug
+    setImportedTab(null)
+    queryClient.setQueryData(['getTab', url], fullTab)
+    queryClient.setQueryData(['getBackgroundTab', url], fullTab)
+    setImportedTab(fullTab)
+    setSelectedTab((prev) => ({ ...prev, url, slug }))
+    router.push(`/tab/${slug}`)
+  }
+
+  const handleDownload = (filename: string) => {
+    window.open(`/api/download-tab?filename=${encodeURIComponent(filename)}`)
+  }
+
+  const handleDelete = async (filename: string) => {
+    await fetch(`/api/saved-tabs?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' })
+    toast({ description: 'Tab gelöscht', status: 'info', position: 'top-right', duration: 1500 })
+    fetchSavedTabs()
+  }
 
   return (
     <>
       <Head>
-        <title>
-          Ultimate Tab - Browse every guitar tabs from Ultimate Guitar with an
-          ads-free, enhanced and responsive interface.
-        </title>
+        <title>Ultimate Tab</title>
       </Head>
       <Fade style={{ display: 'flex', flexGrow: '1' }} in={true}>
-        <Flex w={'100%'} direction={{ base: 'column', md: 'row' }}>
-          <Flex p={8} flex={1} align={'center'} justify={'center'}>
-            <Stack spacing={6} w={'full'} maxW={'lg'}>
-              <Heading fontSize={{ base: '3xl', md: '4xl', lg: '5xl' }}>
-                <Text
-                  as={'span'}
-                  position={'relative'}
-                  _after={{
-                    content: "''",
-                    width: 'full',
-                    height: useBreakpointValue({ base: '20%', md: '30%' }),
-                    position: 'absolute',
-                    bottom: 1,
-                    left: 0,
-                    bg: 'fadebp',
-                    zIndex: -1,
-                    opacity: 0.7,
-                  }}
-                >
-                  100% ads-free,
-                </Text>
-                <br />{' '}
-                <Text
-                  as={'span'}
-                  position={'relative'}
-                  _after={{
-                    content: "''",
-                    width: 'full',
-                    height: useBreakpointValue({ base: '20%', md: '30%' }),
-                    position: 'absolute',
-                    bottom: 1,
-                    left: 0,
-                    bg: 'fadebp',
-                    zIndex: -1,
-                    opacity: 0.7,
-                  }}
-                >
-                  100% responsive,
-                </Text>
-                <br />{' '}
-                <Text color={'blue.400'} as={'span'}>
-                  Ultimate guitar tabs
-                </Text>{' '}
-              </Heading>
-              <Text fontSize={{ base: 'md', lg: 'lg' }} color={'gray.500'}>
-                Browse every guitar tabs from Ultimate Guitar with an ads-free,
-                enhanced and responsive interface.
-              </Text>
-              <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-                <Button
-                  colorScheme={'transparent'}
-                  rounded={'full'}
-                  bg={'fadebp'}
-                  color={'white'}
-                  onClick={() => router.push('/search')}
-                  _hover={{
-                    opacity: 0.8,
-                  }}
-                >
-                  Get started
-                </Button>
-                <Button
-                  leftIcon={<FaGithub />}
-                  rounded={'full'}
-                  bg={'blackAlpha.800'}
-                  color={'white'}
-                  onClick={() =>
-                    window.open(
-                      'https://github.com/BenoitBellegarde/UltimateTab',
-                    )
-                  }
-                  _hover={{
-                    opacity: 0.8,
-                  }}
-                >
-                  Support on GitHub
-                </Button>
-              </Stack>
-            </Stack>
+        <Flex w="100%" p={8} direction="column" maxW="2xl" mx="auto">
+
+          {/* Header row */}
+          <Flex align="center" justify="space-between" mb={6}>
+            <Heading fontSize={{ base: '2xl', md: '3xl' }}>
+              🎸 Gespeicherte Tabs
+            </Heading>
+            <Button
+              leftIcon={<FiSearch />}
+              colorScheme="blue"
+              variant="solid"
+              rounded="full"
+              size="sm"
+              onClick={() => router.push('/search')}
+            >
+              Suchen
+            </Button>
           </Flex>
-          <Flex
-            p={useBreakpointValue({ base: 0, md: 8 })}
-            flex={1}
-            align={'center'}
-            justify={'center'}
-          >
-            <Image
-              alt={'Login Image'}
-              objectFit={useBreakpointValue({ base: 'contain', md: 'cover' })}
-              style={{
-                aspectRatio: useBreakpointValue({
-                  base: '16/9',
-                  md: 'initial',
-                }),
-              }}
-              h={useBreakpointValue({ base: '90%', md: '50%', lg: '60%' })}
-              src={'home-illustration.svg'}
+
+          {/* Search bar */}
+          <InputGroup mb={4}>
+            <InputLeftElement pointerEvents="none">
+              <FiSearch color="gray" />
+            </InputLeftElement>
+            <Input
+              placeholder="Gespeicherte Tabs durchsuchen…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
             />
-          </Flex>
+          </InputGroup>
+
+          {/* Tab list */}
+          {loading ? (
+            <Flex justify="center" mt={10}><Spinner /></Flex>
+          ) : (() => {
+            const q = searchQuery.toLowerCase()
+            const filtered = savedTabs.filter(tab =>
+              !q ||
+              tab.artist?.toLowerCase().includes(q) ||
+              tab.name?.toLowerCase().includes(q) ||
+              tab.type?.toLowerCase().includes(q)
+            )
+            if (filtered.length === 0) return (
+              <Box textAlign="center" mt={10} color="gray.400">
+                <Text fontSize="lg" mb={2}>
+                  {savedTabs.length === 0 ? 'Noch keine Tabs gespeichert.' : 'Keine Treffer.'}
+                </Text>
+                {savedTabs.length === 0 && (
+                  <Text fontSize="sm">Suche einen Tab und klicke auf &quot;Speichern&quot;.</Text>
+                )}
+              </Box>
+            )
+            return (
+              <Stack spacing={2}>
+                {filtered.map((tab) => (
+                <Flex
+                  key={tab.filename}
+                  align="center"
+                  justify="space-between"
+                  px={4}
+                  py={3}
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                  borderRadius="md"
+                  cursor="pointer"
+                  _hover={{ bg: hoverBg }}
+                  onClick={() => handleOpen(tab)}
+                >
+                  <Box flex={1} mr={2}>
+                    <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
+                      {tab.artist} — {tab.name}
+                    </Text>
+                    <Flex align="center" gap={2} mt={0.5}>
+                      <Badge fontSize="xs" colorScheme="blue">{tab.type}</Badge>
+                      <Text fontSize="xs" color="gray.400">
+                        {tab.savedAt ? new Date(tab.savedAt).toLocaleDateString('de-DE') : ''}
+                      </Text>
+                    </Flex>
+                  </Box>
+                  <Flex gap={1} onClick={(e) => e.stopPropagation()}>
+                    <IconButton
+                      aria-label="JSON herunterladen"
+                      icon={<FiDownload />}
+                      size="xs"
+                      variant="ghost"
+                      title="JSON herunterladen"
+                      onClick={() => handleDownload(tab.filename)}
+                    />
+                    <IconButton
+                      aria-label="Löschen"
+                      icon={<FiTrash2 />}
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="red"
+                      onClick={() => handleDelete(tab.filename)}
+                    />
+                  </Flex>
+                </Flex>
+              ))}
+            </Stack>
+            )
+          })()}
         </Flex>
       </Fade>
     </>
