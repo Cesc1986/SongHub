@@ -17,10 +17,10 @@ interface AutoscrollerProps {
   isLoading: boolean
 }
 
-const MIN_SPEED = 10
-const MAX_SPEED = 300
-const STEP = 20
-const DEFAULT_SPEED = 50
+const MIN_SPEED = 5
+const MAX_SPEED = 100
+const STEP = 5
+const DEFAULT_SPEED = 20
 
 export default function Autoscroller({
   showAutoscroll,
