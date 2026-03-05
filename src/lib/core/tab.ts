@@ -95,12 +95,12 @@ export async function getTabsList(
       },
       { source, q },
     )
-    await browser.close()
+    await page.close()
     return tabsParsed
   } catch (error) {
     console.log(error)
   } finally {
-    await browser.close()
+    await page.close()
   }
 }
 
@@ -184,11 +184,11 @@ export async function getTab(
           chordsDiagrams,
         }
       })
-      // await browser.close()
-      return { tabInfos: tabParsed, browser: browser }
+      // await page.close()
+      return { tabInfos: tabParsed, page: page, browser: browser }
     } catch (error) {
       console.log(error)
-      await browser.close()
+      await page.close()
     }
   }
 
@@ -212,17 +212,18 @@ export async function getTab(
       const tabResponsive: string = await page.evaluate(() => {
         return document.querySelector('pre')?.outerHTML || ''
       })
-      // await browser.close()
+      // await page.close()
       return {
         htmlTab: sanitizeHtml(tabResponsive, {
           allowedAttributes: {
             span: ['class'],
           },
         }),
+        page: page,
         browser: browser,
       }
     } catch (error) {
-      await browser.close()
+      await page.close()
       console.log(error)
     }
   }
@@ -232,8 +233,8 @@ export async function getTab(
   ])
 
   // Close browsers when both requests completed to prevent an issue with "puppeteer-real-browser" on Linux
-  await tabParsed.browser.close()
-  await tabResponsive.browser.close()
+  await tabParsed.page?.close()
+  await tabResponsive?.page?.close()
 
   tabParsed.tabInfos.htmlTab = tabResponsive?.htmlTab
   const { access_token } = await getSpotifyAccessToken()
