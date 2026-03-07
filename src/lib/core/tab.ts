@@ -95,7 +95,6 @@ export async function getTabsList(
       },
       { source, q },
     )
-    await page.close()
     return tabsParsed
   } catch (error) {
     console.log(error)
