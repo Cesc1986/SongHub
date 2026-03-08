@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "[start.sh] Cleaning up stale Xvfb lock files..."
+rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
+
 echo "[start.sh] Starting Xvfb..."
 Xvfb :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset &
 XVFB_PID=$!
