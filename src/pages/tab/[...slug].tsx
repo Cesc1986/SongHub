@@ -34,12 +34,43 @@ export default function TabPage(): JSX.Element {
     useState<Tab>(selectedTabContent)
 
   useEffect(() => {
-    if (slug) {
-      setSelectedTab((prevState) => ({
-        ...prevState,
-        url: `https://tabs.ultimate-guitar.com/tab/${slug}`,
-      }))
-    }
+    if (!slug) return
+
+    // 1. Check sessionStorage (navigation from saved list)
+    try {
+      const raw = sessionStorage.getItem('savedTabCache')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.tab?.url?.startsWith('local://')) {
+          setSelectedTab((prevState) => ({ ...prevState, url: parsed.tab.url }))
+          return
+        }
+      }
+    } catch {}
+
+    // 2. Check if this slug belongs to a saved image-tab (e.g. after refresh)
+    fetch(`/api/tab-by-slug?slug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.tab?.url?.startsWith('local://')) {
+          try {
+            sessionStorage.setItem('savedTabCache', JSON.stringify({ url: data.tab.url, tab: data.tab }))
+          } catch {}
+          setSelectedTab((prevState) => ({ ...prevState, url: data.tab.url }))
+          setUpdatedResponsiveTab(data.tab)
+        } else {
+          setSelectedTab((prevState) => ({
+            ...prevState,
+            url: `https://tabs.ultimate-guitar.com/tab/${slug}`,
+          }))
+        }
+      })
+      .catch(() => {
+        setSelectedTab((prevState) => ({
+          ...prevState,
+          url: `https://tabs.ultimate-guitar.com/tab/${slug}`,
+        }))
+      })
   }, [slug, setSelectedTab])
 
   useEffect(() => {
