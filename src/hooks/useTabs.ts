@@ -40,6 +40,7 @@ export default function useTabs(
   importedTab?: Tab,
 ) {
   const isImported = Boolean(importedTab && importedTab.url === url)
+  const isLocalUrl = url.startsWith('local://')
 
   // Check sessionStorage for a cached saved tab
   const cachedTab = typeof window !== 'undefined' ? getCachedTab(url) : null
@@ -49,7 +50,7 @@ export default function useTabs(
     async ({ signal }) => getDatasTab(url, fontSize, widthBrowser, signal),
     {
       // Skip network fetch if we have an imported tab or a sessionStorage cache hit
-      enabled: !isImported && !cachedTab && url.length > 0,
+      enabled: !isImported && !cachedTab && !isLocalUrl && url.length > 0,
       initialData: cachedTab ?? (isImported ? importedTab : undefined),
       initialDataUpdatedAt: (cachedTab || isImported) ? Date.now() : undefined,
       staleTime: (cachedTab || isImported) ? Infinity : 0,

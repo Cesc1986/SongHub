@@ -11,12 +11,14 @@ import {
   MenuButton,
   MenuList,
   IconButton,
+  useDisclosure,
 } from '@chakra-ui/react'
 import { HamburgerIcon, MoonIcon, SunIcon } from '@chakra-ui/icons'
 import NextLink from 'next/link'
 import { MutableRefObject } from 'react'
 import AutocompleteInput from './AutocompleteInput'
 import TabImporter from './TabImporter'
+import ImageTabUploader from './ImageTabUploader'
 
 export default function Nav({
   refBackdrop,
@@ -25,6 +27,8 @@ export default function Nav({
 }): JSX.Element {
   const { colorMode, toggleColorMode } = useColorMode()
   const titleHeader = useBreakpointValue({ base: 'Ut', md: 'Ultimate tab' })
+  const { isOpen: isUploaderOpen, onOpen: onUploaderOpen, onClose: onUploaderClose } = useDisclosure()
+  const { isOpen: isCameraOpen, onOpen: onCameraOpen, onClose: onCameraClose } = useDisclosure()
   return (
     <>
       <Box px={4}>
@@ -64,6 +68,8 @@ export default function Nav({
                 />
                 <MenuList>
                   <TabImporter />
+                  <ImageTabUploader isOpen={isUploaderOpen} onClose={onUploaderClose} asMenuItem onMenuItemClick={onUploaderOpen} />
+                  <ImageTabUploader isOpen={isCameraOpen} onClose={onCameraClose} cameraMode asCameraMenuItem onCameraMenuItemClick={onCameraOpen} />
                 </MenuList>
               </Menu>
             </Stack>

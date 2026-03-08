@@ -60,6 +60,18 @@ export default function Home(): JSX.Element {
     const parsed = await res.json()
     const fullTab = parsed.tab
     if (!fullTab) return
+
+    // Image-tabs have local:// URLs — keep them as-is, use slug from URL
+    if (fullTab.url?.startsWith('local://')) {
+      const slug = fullTab.url.replace('local://image-tab/', '')
+      fullTab.slug = slug
+      try {
+        sessionStorage.setItem('savedTabCache', JSON.stringify({ url: fullTab.url, tab: fullTab }))
+      } catch {}
+      window.location.href = `/tab/${slug}`
+      return
+    }
+
     // Fix slug: remove leading 'tab/' if present (avoid double tab/tab/ in URL)
     const slug = (fullTab.slug || '').replace(/^tab\//, '')
     const url = `https://tabs.ultimate-guitar.com/tab/${slug}`
@@ -95,16 +107,6 @@ export default function Home(): JSX.Element {
             <Heading fontSize={{ base: '2xl', md: '3xl' }}>
               🎸 Gespeicherte Tabs
             </Heading>
-            <Button
-              leftIcon={<FiSearch />}
-              colorScheme="blue"
-              variant="solid"
-              rounded="full"
-              size="sm"
-              onClick={() => router.push('/search')}
-            >
-              Suchen
-            </Button>
           </Flex>
 
           {/* Search bar */}
