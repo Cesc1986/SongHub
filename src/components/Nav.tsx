@@ -26,7 +26,7 @@ export default function Nav({
   refBackdrop: MutableRefObject<HTMLDivElement>
 }): JSX.Element {
   const { colorMode, toggleColorMode } = useColorMode()
-  const titleHeader = useBreakpointValue({ base: 'Ut', md: 'Ultimate tab' })
+  const titleHeader = useBreakpointValue({ base: 'SH', md: 'Song Hub' })
   const { isOpen: isUploaderOpen, onOpen: onUploaderOpen, onClose: onUploaderClose } = useDisclosure()
   const { isOpen: isCameraOpen, onOpen: onCameraOpen, onClose: onCameraClose } = useDisclosure()
   return (

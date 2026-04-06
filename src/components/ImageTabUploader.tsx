@@ -8,7 +8,6 @@ import {
   Box,
   Text,
   Stack,
-  Select,
   useToast,
   useColorModeValue,
   MenuItem,
@@ -24,7 +23,7 @@ import {
 } from '@chakra-ui/react'
 import { FiUpload, FiImage, FiCamera } from 'react-icons/fi'
 import { useRef, useState, useCallback } from 'react'
-import { useRouter } from 'next/router'
+import ImageCropper from './ImageCropper'
 
 interface Props {
   isOpen: boolean
@@ -32,7 +31,6 @@ interface Props {
   onSaved?: () => void
   asMenuItem?: boolean
   onMenuItemClick?: () => void
-  // camera mode: opens camera directly instead of file picker
   cameraMode?: boolean
   asCameraMenuItem?: boolean
   onCameraMenuItemClick?: () => void
@@ -53,13 +51,14 @@ export default function ImageTabUploader({
   const [preview, setPreview] = useState<string | null>(null)
   const [artist, setArtist] = useState('')
   const [name, setName] = useState('')
-  const [type, setType] = useState('Chords')
+  const [type, setType] = useState('Foto')
+  const [showCropper, setShowCropper] = useState(false)
+  const [rawImageDataUrl, setRawImageDataUrl] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
-  const router = useRouter()
   const dropBg = useColorModeValue('gray.100', 'gray.700')
   const dropBorderColor = useColorModeValue('gray.300', 'gray.500')
   const dragBg = useColorModeValue('blue.50', 'blue.900')
@@ -69,8 +68,10 @@ export default function ImageTabUploader({
     setPreview(null)
     setArtist('')
     setName('')
-    setType('Chords')
+    setType('Foto')
     setIsDragging(false)
+    setShowCropper(false)
+    setRawImageDataUrl(null)
   }
 
   const handleClose = () => {
@@ -87,9 +88,8 @@ export default function ImageTabUploader({
     const reader = new FileReader()
     reader.onload = (e) => {
       const result = e.target?.result as string
-      const base64 = result.split(',')[1]
-      setImageBase64(base64)
-      setPreview(result)
+      setRawImageDataUrl(result)
+      setShowCropper(true)
     }
     reader.readAsDataURL(file)
   }
@@ -114,6 +114,18 @@ export default function ImageTabUploader({
 
   const handleDragLeave = () => setIsDragging(false)
 
+  const handleCropComplete = (croppedBase64: string, mime: string) => {
+    setImageBase64(croppedBase64)
+    setMimeType(mime)
+    setPreview(`data:${mime};base64,${croppedBase64}`)
+    setShowCropper(false)
+  }
+
+  const handleCropCancel = () => {
+    setShowCropper(false)
+    setRawImageDataUrl(null)
+  }
+
   const handleSave = async () => {
     if (!imageBase64 || !artist.trim() || !name.trim()) {
       toast({ description: 'Bitte Bild, Interpret und Titel ausfüllen', status: 'warning', position: 'top-right', duration: 2500 })
@@ -137,6 +149,7 @@ export default function ImageTabUploader({
       })
       handleClose()
       onSaved?.()
+      window.dispatchEvent(new Event('tab-saved'))
     } catch (err: any) {
       toast({ description: err.message || 'Fehler beim Speichern', status: 'error', position: 'top-right', duration: 3000 })
     } finally {
@@ -154,31 +167,74 @@ export default function ImageTabUploader({
           <ModalHeader>{modalTitle}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Stack spacing={4}>
-              {/* Hidden file inputs */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
+            {showCropper && rawImageDataUrl ? (
+              <ImageCropper
+                imageSrc={rawImageDataUrl}
+                onCropComplete={handleCropComplete}
+                onCancel={handleCropCancel}
               />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
+            ) : (
+              <Stack spacing={4}>
+                {/* Hidden file inputs */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
 
-              {/* Drop zone / preview */}
-              {cameraMode ? (
-                // Camera mode: show preview or camera button
-                <Box textAlign="center">
-                  {preview ? (
-                    <Image src={preview} alt="Vorschau" maxH="220px" mx="auto" borderRadius="md" />
-                  ) : (
+                {/* Preview or input */}
+                {preview ? (
+                  <Box textAlign="center">
+                    <Box 
+                      border="1px solid" 
+                      borderColor="gray.300" 
+                      borderRadius="md" 
+                      p={2}
+                      bg="gray.50"
+                      _dark={{ bg: 'gray.800' }}
+                      cursor="pointer"
+                      onClick={() => rawImageDataUrl && setShowCropper(true)}
+                      _hover={{ opacity: 0.9 }}
+                    >
+                      <Image
+                        src={preview}
+                        alt="Vorschau"
+                        maxH="55vh"
+                        mx="auto"
+                      />
+                    </Box>
+                    <Button
+                      size="sm"
+                      variant="link"
+                      colorScheme="blue"
+                      mt={2}
+                      onClick={() => rawImageDataUrl && setShowCropper(true)}
+                    >
+                      ✏️ Bild editieren
+                    </Button>
+                    <Box mt={2}>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="red"
+                        onClick={() => { setImageBase64(null); setPreview(null); setRawImageDataUrl(null) }}
+                      >
+                        Bild entfernen
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : cameraMode ? (
+                  <Box textAlign="center">
                     <Button
                       leftIcon={<Icon as={FiCamera} />}
                       colorScheme="blue"
@@ -187,90 +243,50 @@ export default function ImageTabUploader({
                     >
                       Kamera öffnen
                     </Button>
-                  )}
-                  {preview && (
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      colorScheme="blue"
-                      mt={2}
-                      onClick={() => cameraInputRef.current?.click()}
-                    >
-                      Neues Foto aufnehmen
-                    </Button>
-                  )}
-                </Box>
-              ) : (
-                // Upload mode: drag & drop zone
-                <Box
-                  border="2px dashed"
-                  borderColor={isDragging ? 'blue.400' : dropBorderColor}
-                  borderRadius="md"
-                  bg={isDragging ? dragBg : dropBg}
-                  p={6}
-                  textAlign="center"
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {preview ? (
-                    <Image src={preview} alt="Vorschau" maxH="220px" mx="auto" borderRadius="md" />
-                  ) : (
-                    <>
-                      <Icon as={FiImage} boxSize={10} color="gray.400" mb={2} />
-                      <Text color="gray.500" fontSize="sm">
-                        Foto hierher ziehen oder klicken zum Auswählen
-                      </Text>
-                      <Text color="gray.400" fontSize="xs" mt={1}>JPG, PNG, WebP</Text>
-                    </>
-                  )}
-                </Box>
-              )}
+                  </Box>
+                ) : (
+                  <Box
+                    border="2px dashed"
+                    borderColor={isDragging ? 'blue.400' : dropBorderColor}
+                    borderRadius="md"
+                    bg={isDragging ? dragBg : dropBg}
+                    p={6}
+                    textAlign="center"
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Icon as={FiImage} boxSize={10} color="gray.400" mb={2} />
+                    <Text color="gray.500" fontSize="sm">
+                      Foto hierher ziehen oder klicken zum Auswählen
+                    </Text>
+                    <Text color="gray.400" fontSize="xs" mt={1}>JPG, PNG, WebP</Text>
+                  </Box>
+                )}
 
-              {preview && (
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  colorScheme="red"
-                  alignSelf="flex-start"
-                  onClick={() => { setImageBase64(null); setPreview(null) }}
-                >
-                  Bild entfernen
-                </Button>
-              )}
+                {/* Metadata fields */}
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm">Interpret</FormLabel>
+                  <Input
+                    placeholder="z.B. The Beatles"
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value)}
+                  />
+                </FormControl>
 
-              {/* Metadata fields */}
-              <FormControl isRequired>
-                <FormLabel fontSize="sm">Interpret</FormLabel>
-                <Input
-                  placeholder="z.B. The Beatles"
-                  value={artist}
-                  onChange={(e) => setArtist(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl isRequired>
-                <FormLabel fontSize="sm">Titel</FormLabel>
-                <Input
-                  placeholder="z.B. Let It Be"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel fontSize="sm">Typ</FormLabel>
-                <Select value={type} onChange={(e) => setType(e.target.value)}>
-                  <option value="Chords">Chords</option>
-                  <option value="Tab">Tab</option>
-                  <option value="Bass">Bass</option>
-                  <option value="Ukulele">Ukulele</option>
-                </Select>
-              </FormControl>
-            </Stack>
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm">Titel</FormLabel>
+                  <Input
+                    placeholder="z.B. Let It Be"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </FormControl>
+              </Stack>
+            )}
           </ModalBody>
           <ModalFooter gap={2}>
             <Button variant="ghost" onClick={handleClose}>Abbrechen</Button>

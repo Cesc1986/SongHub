@@ -115,7 +115,7 @@ export default function AutocompleteInput({
             showBackdrop(false)
           }
         }}
-        placeholder="Search a song or an artist..."
+        placeholder="Search a song or an artist in the internet..."
         borderRadius={!inputFocus && 'full'}
         bg={'var(--chakra-colors-chakra-body-bg)'}
         value={valueAC}

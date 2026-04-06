@@ -51,6 +51,7 @@ export interface Tab {
   htmlTab?: string
   versions?: Tab[]
   chordsDiagrams?: UGChordCollection[]
+  savedAt?: string
 }
 
 export interface TabScrapped {

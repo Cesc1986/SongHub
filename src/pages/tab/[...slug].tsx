@@ -27,8 +27,8 @@ export default function TabPage(): JSX.Element {
   const toast = useToast()
 
   const title = selectedTabContent
-    ? `${selectedTabContent.name} by ${selectedTabContent.artist} - Ultimate Tab`
-    : 'Tab - Ultimate Tab'
+    ? `${selectedTabContent.name} by ${selectedTabContent.artist} - Song Hub`
+    : 'Tab - Song Hub'
 
   const [updatedResponsiveTab, setUpdatedResponsiveTab] =
     useState<Tab>(selectedTabContent)
