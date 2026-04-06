@@ -18,12 +18,12 @@ export default function Nav({}: {}): JSX.Element {
       >
         <Text fontSize="xs" whiteSpace={'nowrap'} overflow={'hidden'} textOverflow={'ellipsis'} flex={1} minW={0}>
           {'By '}
-          <Link href="https://github.com/Cesc1986/" isExternal textDecoration="underline">
+          <Link href="https://github.com/Cesc1986/UltimateTab" isExternal textDecoration="underline">
             Francis
           </Link>
           {' · Based on '}
-          <Link href="https://github.com/BenoitBellegarde/UltimateTab" isExternal textDecoration="underline">
-            Benoit Bellegarde
+          <Link href="https://github.com/BenoitBellegarde/" isExternal textDecoration="underline">
+            Ultimate Tab
           </Link>
         </Text>
 

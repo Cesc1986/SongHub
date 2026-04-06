@@ -17,8 +17,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(404).json({ error: 'File not found' })
   }
 
-  const content = fs.readFileSync(filepath)
+  const content = fs.readFileSync(filepath, 'utf-8')
+  const parsed = JSON.parse(content)
+  
+  // Copy savedAt into tab object so it's available in the UI
+  if (parsed.savedAt && parsed.tab) {
+    parsed.tab.savedAt = parsed.savedAt
+  }
+  
   res.setHeader('Content-Type', 'application/json')
-  res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filename)}"`)
-  res.status(200).send(content)
+  res.status(200).json(parsed)
 }

@@ -115,7 +115,7 @@ export default function Search(): JSX.Element {
   return (
     <>
       <Head>
-        <title>Search - Ultimate Tab</title>
+        <title>Search - Song Hub</title>
       </Head>
       <Fade
         style={{ display: 'flex', flexGrow: '1', flexDirection: 'column' }}
