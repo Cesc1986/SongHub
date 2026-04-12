@@ -1,58 +1,51 @@
 # SongHub
 
-SongHub is a modern web app for searching, saving, and organizing guitar songs/tabs, including setlist planning and secure private access.
+![SongHub](https://img.shields.io/badge/SongHub-Private%20Tab%20Manager-2563eb?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.2-16a34a?style=for-the-badge)
+![Stack](https://img.shields.io/badge/stack-Next.js%20%2B%20ChakraUI-111827?style=for-the-badge)
 
-> **Credits / Base Project**
-> SongHub is based on **UltimateTab** and extends it with additional functionality and UX improvements.
+SongHub is a private song/tab workspace for musicians: search, save, organize, and prepare setlists in one place.
+
+> **Based on UltimateTab**
+> SongHub is built on top of UltimateTab and extended with additional functionality.
 > Original project: https://github.com/mikemikk/UltimateTab
 
-## Features
+## Highlights
 
-- Search and browse guitar tabs/songs (Ultimate Guitar based)
-- Save tabs locally for quick reuse
-- Upload your own song sheets via image/photo
-- Build date-based **setlists** for gigs, rehearsals, or meetings
-- Chord diagrams and chord transposition
-- Autoscroll and font-size controls for live play sessions
-- Password-protected access (credentials via environment variables)
+- Search and browse guitar tabs/songs
+- Save songs locally for fast access
+- Upload your own song sheets via photo/image
+- Build date-based setlists for gigs and rehearsals
+- Chord diagrams, transposition, autoscroll, and font-size controls
+- Password-protected access
 
-## Security
+## Security Configuration
 
-SongHub supports a simple login gate for private usage.
-
-Configure credentials in your environment file:
-
-- `SONGHUB_LOGIN_USERNAME`
-- `SONGHUB_LOGIN_PASSWORD`
-
-Example (`.env.local`):
+Configure login credentials via environment variables:
 
 ```env
 SONGHUB_LOGIN_USERNAME=admin
 SONGHUB_LOGIN_PASSWORD=your_strong_password
 ```
 
-## Tech Stack
+## Deployment (Docker Compose)
 
-- Next.js
-- React
-- Chakra UI
-- React Query
-- Puppeteer-based scraping utilities
-
-## Local Development
+Run SongHub with Docker Compose and expose port `3005`.
 
 ```bash
-npm install
-npm run dev
+docker-compose up -d --build
 ```
 
-Then open: `http://localhost:3000`
+Then open:
 
-## Production (Docker)
+- http://localhost:3005
 
-Use `docker-compose` and expose port `3005` (or your preferred port).
+## Release Notes (v1.2)
+
+- Added setlist functionality
+- Added password login protection
+- Improved access control for protected pages and APIs
 
 ## License
 
-Please refer to the original UltimateTab project and this repository's license files for licensing details.
+Please refer to this repository and the original UltimateTab repository for license details.
