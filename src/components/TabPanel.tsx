@@ -134,6 +134,7 @@ export default function TabPanel({
         targetImgs.forEach((img) => {
           if (img.dataset.prevWidth !== undefined) img.style.width = img.dataset.prevWidth || ''
           if (img.dataset.prevMaxWidth !== undefined) img.style.maxWidth = img.dataset.prevMaxWidth || ''
+          if (img.dataset.prevMaxHeight !== undefined) img.style.maxHeight = img.dataset.prevMaxHeight || ''
           if (img.dataset.prevMargin !== undefined) img.style.margin = img.dataset.prevMargin || ''
           if (img.dataset.prevDisplay !== undefined) img.style.display = img.dataset.prevDisplay || ''
         })
@@ -145,11 +146,13 @@ export default function TabPanel({
     targetImgs.forEach((img) => {
       if (!img.dataset.prevWidth) img.dataset.prevWidth = img.style.width || ''
       if (!img.dataset.prevMaxWidth) img.dataset.prevMaxWidth = img.style.maxWidth || ''
+      if (!img.dataset.prevMaxHeight) img.dataset.prevMaxHeight = img.style.maxHeight || ''
       if (!img.dataset.prevMargin) img.dataset.prevMargin = img.style.margin || ''
       if (!img.dataset.prevDisplay) img.dataset.prevDisplay = img.style.display || ''
 
-      img.style.width = '100%'
+      img.style.width = 'auto'
       img.style.maxWidth = '100%'
+      img.style.maxHeight = '100dvh'
       img.style.margin = '0 auto'
       img.style.display = 'block'
     })
@@ -253,11 +256,13 @@ export default function TabPanel({
       if (isImageContentMode && isFullscreenMode) {
         if (!img.dataset.prevWidth) img.dataset.prevWidth = img.style.width || ''
         if (!img.dataset.prevMaxWidth) img.dataset.prevMaxWidth = img.style.maxWidth || ''
+        if (!img.dataset.prevMaxHeight) img.dataset.prevMaxHeight = img.style.maxHeight || ''
         if (!img.dataset.prevMargin) img.dataset.prevMargin = img.style.margin || ''
         if (!img.dataset.prevDisplay) img.dataset.prevDisplay = img.style.display || ''
 
-        img.style.width = '100%'
+        img.style.width = 'auto'
         img.style.maxWidth = '100%'
+        img.style.maxHeight = '100dvh'
         img.style.margin = '0 auto'
         img.style.display = 'block'
 
@@ -270,6 +275,7 @@ export default function TabPanel({
       } else {
         if (img.dataset.prevWidth !== undefined) img.style.width = img.dataset.prevWidth || ''
         if (img.dataset.prevMaxWidth !== undefined) img.style.maxWidth = img.dataset.prevMaxWidth || ''
+        if (img.dataset.prevMaxHeight !== undefined) img.style.maxHeight = img.dataset.prevMaxHeight || ''
         if (img.dataset.prevMargin !== undefined) img.style.margin = img.dataset.prevMargin || ''
         if (img.dataset.prevDisplay !== undefined) img.style.display = img.dataset.prevDisplay || ''
 
@@ -528,7 +534,8 @@ export default function TabPanel({
               '& img': {
                 display: 'block !important',
                 maxWidth: isFullscreenMode ? '100%' : 'none',
-                width: isFullscreenMode ? '100%' : `${imageZoom}%`,
+                maxHeight: isFullscreenMode ? '100dvh' : 'none',
+                width: isFullscreenMode ? 'auto' : `${imageZoom}%`,
                 height: 'auto',
                 margin: '0 auto',
               }
@@ -587,10 +594,12 @@ export default function TabPanel({
 
           <IconButton
             size="sm"
-            variant="outline"
+            variant={isImageContentMode ? 'solid' : 'outline'}
             boxShadow="md"
-            _hover={{ bg: 'blue.400', color: 'white' }}
-            _active={{ bg: 'fadebp', color: 'white' }}
+            bg={isImageContentMode ? 'whiteAlpha.900' : undefined}
+            color={isImageContentMode ? 'black' : undefined}
+            _hover={isImageContentMode ? { bg: 'whiteAlpha.800', color: 'black' } : { bg: 'blue.400', color: 'white' }}
+            _active={isImageContentMode ? { bg: 'whiteAlpha.700', color: 'black' } : { bg: 'fadebp', color: 'white' }}
             aria-label="Exit fullscreen"
             icon={<MdFullscreenExit />}
             onClick={toggleFullscreen}

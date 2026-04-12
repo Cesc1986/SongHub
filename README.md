@@ -1,7 +1,7 @@
 # SongHub
 
 ![SongHub](https://img.shields.io/badge/SongHub-Private%20Tab%20Manager-2563eb?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-v1.3-16a34a?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.4-16a34a?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%2B%20ChakraUI-111827?style=for-the-badge)
 
 SongHub is a private song/tab workspace for musicians: search, save, organize, and prepare setlists in one place.
@@ -65,16 +65,20 @@ Then open:
 docker compose logs -f songhub
 ```
 
-## Release Notes (v1.3)
+## Release Notes (v1.4)
 
-- Performance package for concurrent usage:
-  - tab response cache
-  - in-flight request deduplication
-  - concurrency limits for scrape jobs/pages
-- Removed unnecessary Spotify token call from tab loading path
-- Saved songs flow optimized (JSON path) and background adaptation fixed
-- Songs counter on home tab (`🎸 Songs (N)`)
-- Footer version now derived from package version
+- Fullscreen visual polish for mobile and tablet:
+  - photo fullscreen is now edge-to-edge and centered
+  - single tap exits photo fullscreen
+  - double tap used for zoom behavior
+- Text/tab fullscreen usability improvements:
+  - 5px left padding in fullscreen reading mode
+  - autoscroll controls include speed (+/-) when active
+  - content starts below overlay controls to avoid text overlap
+- Layout spacing refinements:
+  - tighter global side spacing across pages
+  - header/footer alignment with homepage song cards
+- Footer version remains derived from `package.json`
 
 ## License
 
