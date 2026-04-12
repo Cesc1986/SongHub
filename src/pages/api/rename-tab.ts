@@ -1,10 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import fs from 'fs'
 import path from 'path'
+import { getAuthFromRequest } from '../../lib/auth'
+import { appendChangeLog, getClientIp } from '../../lib/audit'
 
 const SAVED_DIR = path.join(process.cwd(), 'saved-tabs')
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const auth = getAuthFromRequest(req)
+  const actor = auth.username || 'unknown'
+  const role = auth.role
+  const ip = getClientIp(req)
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { filename, artist, name } = req.body
@@ -31,6 +38,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (newFilename !== path.basename(filename)) {
     fs.unlinkSync(filepath)
   }
+
+  appendChangeLog({
+    timestamp: new Date().toISOString(),
+    username: actor,
+    role,
+    ip,
+    action: 'song_renamed',
+    details: {
+      oldFilename: path.basename(filename),
+      newFilename,
+      artist,
+      name,
+    },
+  })
 
   return res.status(200).json({ success: true, filename: newFilename })
 }

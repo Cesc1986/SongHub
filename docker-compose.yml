@@ -15,6 +15,8 @@ services:
       # Login credentials: define in .env (same folder as docker-compose.yml)
       - SONGHUB_LOGIN_USERNAME=${SONGHUB_LOGIN_USERNAME:-admin}
       - SONGHUB_LOGIN_PASSWORD=${SONGHUB_LOGIN_PASSWORD:-passwort}
+      - SONGHUB_ADMIN_USERNAME=${SONGHUB_ADMIN_USERNAME:-admin}
+      - SONGHUB_ADMIN_PASSWORD=${SONGHUB_ADMIN_PASSWORD:-besservorsicht!?}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3005/api/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
       interval: 30s

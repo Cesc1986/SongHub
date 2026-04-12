@@ -24,8 +24,13 @@ SongHub is a private song/tab workspace for musicians: search, save, organize, a
 Configure login credentials via environment variables:
 
 ```env
+# Shared app login
 SONGHUB_LOGIN_USERNAME=admin
-SONGHUB_LOGIN_PASSWORD=your_strong_password
+SONGHUB_LOGIN_PASSWORD=your_user_password
+
+# Admin login (required for /admin page)
+SONGHUB_ADMIN_USERNAME=admin
+SONGHUB_ADMIN_PASSWORD=besservorsicht!?
 ```
 
 For Docker Compose:
@@ -79,6 +84,16 @@ docker compose logs -f songhub
   - tighter global side spacing across pages
   - header/footer alignment with homepage song cards
 - Footer version remains derived from `package.json`
+
+## Admin Center
+
+Admin-only page: `/admin`
+
+Features:
+- Access log (who logged in, when, with which IP)
+- Change log (song create/delete/rename/save actions)
+- Trash management (song/setlist deletes)
+  - only admin can permanently delete single/all trash items
 
 ## License
 

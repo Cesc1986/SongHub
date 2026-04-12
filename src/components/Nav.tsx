@@ -16,7 +16,7 @@ import {
 import { HamburgerIcon, MoonIcon, SunIcon } from '@chakra-ui/icons'
 import NextLink from 'next/link'
 import { useRouter } from 'next/router'
-import { MutableRefObject } from 'react'
+import { MutableRefObject, useEffect, useState } from 'react'
 import AutocompleteInput from './AutocompleteInput'
 import TabImporter from './TabImporter'
 import ImageTabUploader from './ImageTabUploader'
@@ -28,9 +28,27 @@ export default function Nav({
 }): JSX.Element {
   const router = useRouter()
   const { colorMode, toggleColorMode } = useColorMode()
+  const [isAdmin, setIsAdmin] = useState(false)
   const titleHeader = useBreakpointValue({ base: 'SH', md: 'Song Hub' })
   const { isOpen: isUploaderOpen, onOpen: onUploaderOpen, onClose: onUploaderClose } = useDisclosure()
   const { isOpen: isCameraOpen, onOpen: onCameraOpen, onClose: onCameraClose } = useDisclosure()
+
+  useEffect(() => {
+    let active = true
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!active) return
+        setIsAdmin(Boolean(data?.authenticated && data?.role === 'admin'))
+      })
+      .catch(() => {
+        if (!active) return
+        setIsAdmin(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [router.pathname])
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -78,6 +96,17 @@ export default function Nav({
                   <TabImporter />
                   <ImageTabUploader isOpen={isUploaderOpen} onClose={onUploaderClose} asMenuItem onMenuItemClick={onUploaderOpen} />
                   <ImageTabUploader isOpen={isCameraOpen} onClose={onCameraClose} cameraMode asCameraMenuItem onCameraMenuItemClick={onCameraOpen} />
+                  {isAdmin && (
+                    <Button
+                      as={NextLink}
+                      href="/admin"
+                      size="sm"
+                      variant="ghost"
+                      m={2}
+                    >
+                      Admin
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" m={2} onClick={handleLogout}>Logout</Button>
                 </MenuList>
               </Menu>

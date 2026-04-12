@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import fs from 'fs'
 import path from 'path'
+import { getAuthFromRequest } from '../../lib/auth'
+import { getClientIp, pushSetlistTrash } from '../../lib/audit'
 
 const SETLIST_FILE = path.join(process.cwd(), 'saved-tabs', 'setlists.json')
 
@@ -30,6 +32,11 @@ function saveSetlists(setlists: Setlist) {
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const auth = getAuthFromRequest(req)
+  const actor = auth.username || 'unknown'
+  const role = auth.role
+  const ip = getClientIp(req)
+
   if (req.method === 'GET') {
     const setlists = loadSetlists()
     const { date } = req.query
@@ -90,12 +97,32 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const setlists = loadSetlists()
     if (filename && typeof filename === 'string') {
       // Remove single entry
+      const deletedEntry = (setlists[date] || []).find((e) => e.filename === filename)
+      if (deletedEntry) {
+        pushSetlistTrash({
+          type: 'setlist_entry',
+          deletedBy: actor,
+          deletedByRole: role,
+          ip,
+          payload: { date, entry: deletedEntry },
+        })
+      }
+
       setlists[date] = (setlists[date] || []).filter(e => e.filename !== filename)
       if (setlists[date].length === 0) {
         delete setlists[date]
       }
     } else {
       // Delete entire setlist
+      if (setlists[date]?.length) {
+        pushSetlistTrash({
+          type: 'setlist_day',
+          deletedBy: actor,
+          deletedByRole: role,
+          ip,
+          payload: { date, entries: setlists[date] },
+        })
+      }
       delete setlists[date]
     }
 

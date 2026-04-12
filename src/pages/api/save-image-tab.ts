@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import fs from 'fs'
 import path from 'path'
+import { getAuthFromRequest } from '../../lib/auth'
+import { appendChangeLog, getClientIp } from '../../lib/audit'
 
 const SAVED_DIR = path.join(process.cwd(), 'saved-tabs')
 
@@ -17,6 +19,11 @@ export const config = {
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const auth = getAuthFromRequest(req)
+  const actor = auth.username || 'unknown'
+  const role = auth.role
+  const ip = getClientIp(req)
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -60,6 +67,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     filepath,
     JSON.stringify({ savedAt: new Date().toISOString(), version: '1.0', tab }, null, 2),
   )
+
+  appendChangeLog({
+    timestamp: new Date().toISOString(),
+    username: actor,
+    role,
+    ip,
+    action: 'song_saved_image',
+    details: {
+      filename,
+      artist,
+      name,
+      type,
+      slug,
+    },
+  })
 
   return res.status(200).json({ success: true, filename, slug })
 }

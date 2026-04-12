@@ -7,6 +7,8 @@ Create a `.env` file in the same folder as `docker-compose.yml`:
 ```env
 SONGHUB_LOGIN_USERNAME=admin
 SONGHUB_LOGIN_PASSWORD=passwort
+SONGHUB_ADMIN_USERNAME=admin
+SONGHUB_ADMIN_PASSWORD=besservorsicht!?
 ```
 
 > You can copy `.env.example` and adjust the values.
@@ -65,3 +67,4 @@ SONGHUB_PUPPETEER_PAGE_CONCURRENCY=4
 
 - App: http://localhost:3005
 - Login page: http://localhost:3005/login
+- Admin page (admin account only): http://localhost:3005/admin

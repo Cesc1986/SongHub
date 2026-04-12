@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import fs from 'fs'
 import path from 'path'
+import { getAuthFromRequest } from '../../lib/auth'
+import { appendChangeLog, getClientIp, moveSongToTrash } from '../../lib/audit'
 
 const SAVED_DIR = path.join(process.cwd(), 'saved-tabs')
 
@@ -9,6 +11,11 @@ if (!fs.existsSync(SAVED_DIR)) {
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const auth = getAuthFromRequest(req)
+  const actor = auth.username || 'unknown'
+  const role = auth.role
+  const ip = getClientIp(req)
+
   if (req.method === 'POST') {
     // Save tab to server
     const { tab } = req.body
@@ -21,6 +28,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const filepath = path.join(SAVED_DIR, filename)
     fs.writeFileSync(filepath, JSON.stringify({ savedAt: new Date().toISOString(), version: '1.0', tab }, null, 2))
+
+    appendChangeLog({
+      timestamp: new Date().toISOString(),
+      username: actor,
+      role,
+      ip,
+      action: 'song_saved',
+      details: {
+        filename,
+        artist: tab.artist,
+        name: tab.name,
+        type: tab.type,
+      },
+    })
+
     return res.status(200).json({ success: true, filename })
 
   } else if (req.method === 'GET') {
@@ -52,8 +74,27 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     const filepath = path.join(SAVED_DIR, path.basename(filename))
     if (fs.existsSync(filepath)) {
-      fs.unlinkSync(filepath)
-      return res.status(200).json({ success: true })
+      const trashEntry = moveSongToTrash({
+        filePath: filepath,
+        originalFilename: path.basename(filename),
+        deletedBy: actor,
+        deletedByRole: role,
+        ip,
+      })
+
+      appendChangeLog({
+        timestamp: new Date().toISOString(),
+        username: actor,
+        role,
+        ip,
+        action: 'song_deleted',
+        details: {
+          filename: path.basename(filename),
+          trashId: trashEntry.id,
+        },
+      })
+
+      return res.status(200).json({ success: true, trashId: trashEntry.id })
     }
     return res.status(404).json({ error: 'File not found' })
   }
