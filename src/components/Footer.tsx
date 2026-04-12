@@ -2,7 +2,10 @@ import { Text, Divider, Link, IconButton, Flex } from '@chakra-ui/react'
 import { FaGithub } from 'react-icons/fa'
 
 export default function Nav({}: {}): JSX.Element {
-  const version: string = process.env.NEXT_PUBLIC_UT_VERSION || '0.9'
+  const version: string =
+    process.env.NEXT_PUBLIC_APP_VERSION ||
+    process.env.NEXT_PUBLIC_UT_VERSION ||
+    'dev'
   return (
     <footer>
       <Divider mt={4} />
