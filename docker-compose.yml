@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   songhub:
     build: .
@@ -14,3 +12,6 @@ services:
       - NODE_ENV=production
       - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
       - DISPLAY=:99
+      # Login credentials: define in .env (same folder as docker-compose.yml)
+      - SONGHUB_LOGIN_USERNAME=${SONGHUB_LOGIN_USERNAME:-admin}
+      - SONGHUB_LOGIN_PASSWORD=${SONGHUB_LOGIN_PASSWORD:-geheim}

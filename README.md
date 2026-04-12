@@ -28,12 +28,16 @@ SONGHUB_LOGIN_USERNAME=admin
 SONGHUB_LOGIN_PASSWORD=your_strong_password
 ```
 
+For Docker Compose:
+- Put these values in a `.env` file (same folder as `docker-compose.yml`)
+- `docker-compose.yml` passes them into the container at runtime
+
 ## Deployment (Docker Compose)
 
 Run SongHub with Docker Compose and expose port `3005`.
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 Then open:
