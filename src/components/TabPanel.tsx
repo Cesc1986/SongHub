@@ -101,6 +101,7 @@ export default function TabPanel({
   const [showAutoscroll, setShowAutoscroll] = useState<boolean>(false)
   const [showBackingTrack, setShowBackingTrack] = useState<boolean>(false)
   const [imageZoom, setImageZoom] = useState<number>(100)
+  const [songMark, setSongMark] = useState<'' | 'A' | 'F'>('')
   const [autoscrollSpeed, setAutoscrollSpeed] = useState<number>(10)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const contentContainerRef = useRef<HTMLDivElement>(null)
@@ -194,22 +195,10 @@ export default function TabPanel({
     })
   }
 
-  const flexSongNameDirection = useBreakpointValue({
-    base:
-      selectedTabContent &&
-      selectedTabContent.artist?.length + selectedTabContent.name?.length > 30
-        ? 'column'
-        : 'row',
-    sm: 'row',
-  })
   const borderLightColor = useColorModeValue('gray.200', 'gray.700')
   const widthThirdRow = useBreakpointValue({ base: '100%', md: 'initial' })
   const marginTopThirdRow = useBreakpointValue({ base: 0, md: 2 })
   const paddingTopThirdRow = useBreakpointValue({ base: 1, md: 0 })
-  const capoTuningFlexDirection = useBreakpointValue<'column-reverse' | 'row'>({
-    base: 'column-reverse',
-    sm: 'row',
-  })
 
   useEffect(() => {
     setChordsDiagrams(selectedTabContent?.chordsDiagrams)
@@ -290,12 +279,59 @@ export default function TabPanel({
     setIsImageContentRuntime(false)
   }, [selectedTabContent?.url])
 
+  const getSongMarkStorageKey = () =>
+    selectedTabContent?.url || selectedTab?.url || selectedTabContent?.slug || ''
+
+  useEffect(() => {
+    const key = getSongMarkStorageKey()
+    if (!key || typeof window === 'undefined') {
+      setSongMark('')
+      return
+    }
+
+    try {
+      const raw = localStorage.getItem('songhub-song-marks')
+      if (!raw) {
+        setSongMark('')
+        return
+      }
+      const parsed = JSON.parse(raw)
+      const mark = parsed?.[key]
+      if (mark === 'A' || mark === 'F') {
+        setSongMark(mark)
+      } else {
+        setSongMark('')
+      }
+    } catch {
+      setSongMark('')
+    }
+  }, [selectedTabContent?.url, selectedTab?.url, selectedTabContent?.slug])
+
+  const toggleSongMark = (mark: 'A' | 'F') => {
+    const key = getSongMarkStorageKey()
+    if (!key || typeof window === 'undefined') return
+
+    const nextMark = songMark === mark ? '' : mark
+    setSongMark(nextMark)
+
+    try {
+      const raw = localStorage.getItem('songhub-song-marks')
+      const parsed = raw ? JSON.parse(raw) : {}
+      if (nextMark) {
+        parsed[key] = nextMark
+      } else {
+        delete parsed[key]
+      }
+      localStorage.setItem('songhub-song-marks', JSON.stringify(parsed))
+    } catch {}
+  }
+
   return (
     <>
       <Box
         h="100%"
         px={'5px'}
-        py={2}
+        py={1}
         borderBottomStyle={'solid'}
         borderBottomWidth={selectedTabContent && '1px'}
         borderBottomColor={borderLightColor}
@@ -306,10 +342,21 @@ export default function TabPanel({
           flexDirection="column"
           display={'flex'}
           h="100%"
+          gap={1}
           isLoaded={!isLoading}
         >
           {/* Row 1: Artist + Title — full width */}
-          <Flex alignItems={'center'} flexDirection={'row'} py={1} flexWrap={'nowrap'} minW={0} overflow={'hidden'} width={'100%'} lineHeight={'1.2'}>
+          <Flex
+            alignItems={{ base: 'flex-start', md: 'center' }}
+            flexDirection={{ base: 'column', md: 'row' }}
+            py={0}
+            flexWrap={'nowrap'}
+            minW={0}
+            overflow={'hidden'}
+            width={'100%'}
+            lineHeight={'1.2'}
+            gap={{ base: 0, md: 2 }}
+          >
             {isImageTab ? (
               <Flex direction="column" flex={1} minW={0}>
                 <Editable
@@ -340,17 +387,42 @@ export default function TabPanel({
                 <Text fontSize={'xl'} as="b" mr={1} whiteSpace={'nowrap'} overflow={'hidden'} textOverflow={'ellipsis'} flex={1} minW={0}>
                   {selectedTabContent?.name}
                 </Text>
-                <Text fontSize={'sm'} color="gray.500" whiteSpace={'nowrap'} flexShrink={0}>
+                <Text fontSize={'sm'} color="gray.500" whiteSpace={{ base: 'normal', md: 'nowrap' }} flexShrink={0}>
                   {selectedTabContent?.artist}
                 </Text>
               </>
             )}
           </Flex>
 
-          {/* Row 2: Heart + Save right */}
-          <Flex justifyContent={'space-between'} alignItems={'center'} py={1} flexWrap={'wrap'} gap={1}>
-            {/* Heart + Setlist + Save — right side of row 2 */}
-            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={"auto"}>
+          {/* Row 2: compact actions + song mark */}
+          <Flex justifyContent={'space-between'} alignItems={'center'} py={0} flexWrap={'wrap'} gap={2}>
+            <Flex alignItems={'center'} gap={1}>
+              <Text fontSize={'xs'} color={'gray.500'}>
+                Mark:
+              </Text>
+              <Button
+                size="xs"
+                variant={songMark === 'A' ? 'solid' : 'outline'}
+                colorScheme={songMark === 'A' ? 'green' : 'gray'}
+                onClick={() => toggleSongMark('A')}
+                minW={'28px'}
+                px={2}
+              >
+                A
+              </Button>
+              <Button
+                size="xs"
+                variant={songMark === 'F' ? 'solid' : 'outline'}
+                colorScheme={songMark === 'F' ? 'orange' : 'gray'}
+                onClick={() => toggleSongMark('F')}
+                minW={'28px'}
+                px={2}
+              >
+                F
+              </Button>
+            </Flex>
+
+            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={{ base: 0, md: 'auto' }}>
               <Tooltip placement="left" label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
                 <IconButton
                   icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
@@ -366,48 +438,43 @@ export default function TabPanel({
             </Flex>
           </Flex>
 
-          {selectedTabContent?.tonality && (
-            <Flex justifyContent={'space-between'} flexDirection={'row'}>
-              <Flex fontSize={'sm'} py={2}>
-                <Text color={'gray.500'} as="b" mr={1}>
-                  Key
-                </Text>{' '}
-                <Icon boxSize={5} as={GiMusicalScore} mr={1} />
-                {selectedTabContent?.tonality}
-              </Flex>{' '}
+          {(selectedTabContent?.tonality || selectedTabContent?.difficulty || selectedTabContent?.capo || selectedTabContent?.tuning) && (
+            <Flex flexWrap={'wrap'} gap={2} alignItems={'center'} py={0}>
+              {selectedTabContent?.tonality && (
+                <Badge variant="subtle" colorScheme="blue" px={2} py={1}>
+                  <Flex align="center" gap={1}>
+                    <Icon boxSize={3.5} as={GiMusicalScore} />
+                    <Text fontSize={'xs'}>Key: {selectedTabContent?.tonality}</Text>
+                  </Flex>
+                </Badge>
+              )}
+
               {selectedTabContent?.difficulty && (
-                <Flex fontSize={'sm'} py={2}>
-                  <Text color={'gray.500'} as="b" mr={1}>
-                    Difficulty
-                  </Text>{' '}
-                  <Difficulty level={selectedTabContent?.difficulty} />
-                </Flex>
-              )}{' '}
-            </Flex>
-          )}
-          {(selectedTabContent?.capo || selectedTabContent?.tuning) && (
-            <Flex
-              justifyContent={'space-between'}
-              flexDirection={capoTuningFlexDirection}
-            >
+                <Badge variant="subtle" colorScheme="purple" px={2} py={1}>
+                  <Flex align="center" gap={1}>
+                    <Text fontSize={'xs'}>Difficulty:</Text>
+                    <Difficulty level={selectedTabContent?.difficulty} />
+                  </Flex>
+                </Badge>
+              )}
+
               {selectedTabContent?.capo && (
-                <Flex fontSize={'sm'} py={2}>
-                  <Text color={'gray.500'} as="b" mr={1}>
-                    Capo
-                  </Text>{' '}
-                  <Icon boxSize={5} as={GiCrowbar} mr={1} />
-                  {selectedTabContent?.capo}
-                </Flex>
-              )}{' '}
+                <Badge variant="subtle" colorScheme="orange" px={2} py={1}>
+                  <Flex align="center" gap={1}>
+                    <Icon boxSize={3.5} as={GiCrowbar} />
+                    <Text fontSize={'xs'}>Capo: {selectedTabContent?.capo}</Text>
+                  </Flex>
+                </Badge>
+              )}
+
               {selectedTabContent?.tuning && (
-                <Flex fontSize={'sm'} py={2}>
-                  <Text color={'gray.500'} as="b" mr={1}>
-                    Tuning
-                  </Text>{' '}
-                  <Icon boxSize={5} as={GiGuitarHead} mr={1} />
-                  {selectedTabContent?.tuning?.join(' ')}
-                </Flex>
-              )}{' '}
+                <Badge variant="subtle" colorScheme="teal" px={2} py={1}>
+                  <Flex align="center" gap={1}>
+                    <Icon boxSize={3.5} as={GiGuitarHead} />
+                    <Text fontSize={'xs'}>Tuning: {selectedTabContent?.tuning?.join(' ')}</Text>
+                  </Flex>
+                </Badge>
+              )}
             </Flex>
           )}
 
