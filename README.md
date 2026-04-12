@@ -41,6 +41,8 @@ Run SongHub with Docker Compose and expose port `3005`.
 docker compose up -d --build
 ```
 
+Detailed deployment steps: see [`DEPLOY.md`](./DEPLOY.md)
+
 Then open:
 
 - http://localhost:3005
