@@ -33,6 +33,7 @@ import { Tab, UGChordCollection } from '../types/tabs'
 import { MouseEventHandler, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { FaPlayCircle } from 'react-icons/fa'
+import { MdFullscreenExit } from 'react-icons/md'
 import ChordTransposer from './ChordTransposer'
 import BackingtrackPlayer from './BackingtrackPlayer'
 import Autoscroller from './Autoscroller'
@@ -97,6 +98,19 @@ export default function TabPanel({
   const [showBackingTrack, setShowBackingTrack] = useState<boolean>(false)
   const [imageZoom, setImageZoom] = useState<number>(100)
   const imageContainerRef = useRef<HTMLDivElement>(null)
+  const contentContainerRef = useRef<HTMLDivElement>(null)
+  const [isFullscreenMode, setIsFullscreenMode] = useState<boolean>(false)
+  const fullscreenBg = useColorModeValue('white', 'gray.900')
+
+  const toggleFullscreen = () => {
+    setIsFullscreenMode((prev) => !prev)
+  }
+
+  const openImageFullscreen = () => {
+    if (isImageTab && !isFullscreenMode) {
+      setIsFullscreenMode(true)
+    }
+  }
 
   const changeZoom = (delta: number) => {
     setImageZoom((z) => {
@@ -134,6 +148,21 @@ export default function TabPanel({
     setChordsDiagrams(selectedTabContent?.chordsDiagrams)
   }, [selectedTabContent])
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const originalOverflow = document.body.style.overflow
+    if (isFullscreenMode) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = originalOverflow || ''
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow || ''
+    }
+  }, [isFullscreenMode])
+
   return (
     <>
       <Box
@@ -143,6 +172,7 @@ export default function TabPanel({
         borderBottomStyle={'solid'}
         borderBottomWidth={selectedTabContent && '1px'}
         borderBottomColor={borderLightColor}
+        display={isFullscreenMode ? 'none' : 'block'}
       >
         <Skeleton
           justifyContent={'space-between'}
@@ -311,6 +341,8 @@ export default function TabPanel({
                 setShowBackingTrack={setShowBackingTrack}
                 showAutoscroll={showAutoscroll}
                 setShowAutoscroll={setShowAutoscroll}
+                isFullscreenMode={isFullscreenMode}
+                toggleFullscreen={toggleFullscreen}
               />
             )}
           </Flex>
@@ -321,27 +353,38 @@ export default function TabPanel({
               setShowBackingTrack={setShowBackingTrack}
               showAutoscroll={showAutoscroll}
               setShowAutoscroll={setShowAutoscroll}
+              isFullscreenMode={isFullscreenMode}
+              toggleFullscreen={toggleFullscreen}
             />
           )}
         </Skeleton>
       </Box>
 
       <Flex
-        p={5}
-        h="100%"
+        ref={contentContainerRef}
+        p={isFullscreenMode ? 0 : 5}
+        h={isFullscreenMode ? '100dvh' : '100%'}
         w="100%"
         flexGrow={1}
         alignItems={'stretch'}
         wrap={'wrap'}
         justifyContent="center"
+        position={isFullscreenMode ? 'fixed' : 'relative'}
+        inset={isFullscreenMode ? 0 : undefined}
+        zIndex={isFullscreenMode ? 1400 : undefined}
+        bg={isFullscreenMode ? fullscreenBg : undefined}
+        overflow={isFullscreenMode ? 'auto' : 'visible'}
       >
         <Skeleton display={'flex'} w="100%" isLoaded={!isLoading}>
           <Flex
             ref={isImageTab ? imageContainerRef : undefined}
-            h={'100%'}
+            h={isFullscreenMode ? 'auto' : '100%'}
+            minH={isFullscreenMode ? '100dvh' : undefined}
             w="100%"
             fontSize={`${tabFontSize / 100}rem !important`}
             data-tab-content="true"
+            cursor={isImageTab && !isFullscreenMode ? 'zoom-in' : 'default'}
+            onClick={openImageFullscreen}
             sx={isImageTab ? {
               overflow: 'auto',
               textAlign: 'center',
@@ -361,11 +404,40 @@ export default function TabPanel({
           </Flex>
         </Skeleton>
       </Flex>
+      {isFullscreenMode && (
+        <Flex position="fixed" top={3} right={3} zIndex={1600} gap={2}>
+          <Button
+            size="sm"
+            variant="outline"
+            boxShadow="md"
+            _hover={{ bg: 'blue.400', color: 'white' }}
+            _active={{ bg: 'fadebp', color: 'white' }}
+            isActive={showAutoscroll}
+            leftIcon={<Icon as={FaCircleArrowDown} />}
+            onClick={() => setShowAutoscroll((prev) => !prev)}
+          >
+            Autoscroll
+          </Button>
+          <IconButton
+            size="sm"
+            variant="outline"
+            boxShadow="md"
+            _hover={{ bg: 'blue.400', color: 'white' }}
+            _active={{ bg: 'fadebp', color: 'white' }}
+            aria-label="Exit fullscreen"
+            icon={<MdFullscreenExit />}
+            onClick={toggleFullscreen}
+          />
+        </Flex>
+      )}
+
       <ChordDiagram chords={chordsDiagrams} />
       <Autoscroller
         showAutoscroll={showAutoscroll}
         isLoading={isLoading}
         bottomCSS={'17px'}
+        scrollContainerRef={contentContainerRef}
+        useContainerScroll={isFullscreenMode}
       />
     </>
   )

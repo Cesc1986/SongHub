@@ -8,13 +8,15 @@ import {
   Button,
   IconButton,
 } from '@chakra-ui/react'
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 import { FaPlayCircle } from 'react-icons/fa'
 
 interface AutoscrollerProps {
   showAutoscroll: boolean
   bottomCSS: string
   isLoading: boolean
+  scrollContainerRef?: RefObject<HTMLElement | null>
+  useContainerScroll?: boolean
 }
 
 const MIN_SPEED = 2
@@ -27,6 +29,8 @@ export default function Autoscroller({
   showAutoscroll,
   bottomCSS,
   isLoading,
+  scrollContainerRef,
+  useContainerScroll = false,
 }: AutoscrollerProps): JSX.Element {
   const widthToolsBar = useBreakpointValue({ base: '100%', sm: '50%' })
   const borderColor = useColorModeValue('gray.200', 'gray.600')
@@ -75,13 +79,22 @@ export default function Autoscroller({
       // Accumulate fractional pixels to avoid sub-pixel rounding to 0
       accumulatedRef.current += scrollSpeedRef.current * delta
       const px = Math.floor(accumulatedRef.current)
+
+      const targetEl = useContainerScroll ? scrollContainerRef?.current : null
+
       if (px >= 1) {
-        window.scrollBy(0, px)
+        if (targetEl) {
+          targetEl.scrollBy(0, px)
+        } else {
+          window.scrollBy(0, px)
+        }
         accumulatedRef.current -= px
       }
 
-      const atBottom =
-        window.scrollY + window.innerHeight >= document.body.scrollHeight - 2
+      const atBottom = targetEl
+        ? targetEl.scrollTop + targetEl.clientHeight >= targetEl.scrollHeight - 2
+        : window.scrollY + window.innerHeight >= document.body.scrollHeight - 2
+
       if (!atBottom) {
         rafRef.current = requestAnimationFrame(step)
       } else {
@@ -114,7 +127,21 @@ export default function Autoscroller({
         if (isEnabledRef.current) startScroll()
       }, 600)
     }
-    const events = ['wheel', 'touchstart']
+
+    const events: Array<'wheel' | 'touchstart'> = ['wheel', 'touchstart']
+    const targetEl = useContainerScroll ? scrollContainerRef?.current : null
+
+    if (targetEl) {
+      events.forEach((evt) =>
+        targetEl.addEventListener(evt, handleManualScroll, { passive: true }),
+      )
+      return () => {
+        events.forEach((evt) =>
+          targetEl.removeEventListener(evt, handleManualScroll),
+        )
+      }
+    }
+
     events.forEach((evt) =>
       window.addEventListener(evt, handleManualScroll, { passive: true }),
     )
@@ -124,7 +151,7 @@ export default function Autoscroller({
       )
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [useContainerScroll, scrollContainerRef])
 
   const handlePlayButton = () => {
     setIsEnabled((prev) => !prev)
