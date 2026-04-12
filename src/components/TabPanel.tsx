@@ -484,6 +484,7 @@ export default function TabPanel({
       <Flex
         ref={contentContainerRef}
         p={isFullscreenMode ? 0 : '5px'}
+        pt={isFullscreenMode && !isImageContentMode ? '56px' : undefined}
         h={isFullscreenMode ? '100dvh' : '100%'}
         w="100%"
         flexGrow={1}
@@ -513,9 +514,15 @@ export default function TabPanel({
               overflowX: isFullscreenMode ? 'hidden' : 'auto',
               textAlign: 'center',
               background: isFullscreenMode ? 'black' : undefined,
+              display: isFullscreenMode ? 'flex' : undefined,
+              alignItems: isFullscreenMode ? 'center' : undefined,
+              justifyContent: isFullscreenMode ? 'center' : undefined,
               '& .image-tab-container': {
-                display: isFullscreenMode ? 'block' : 'inline-block',
+                display: isFullscreenMode ? 'flex' : 'inline-block',
+                alignItems: isFullscreenMode ? 'center' : undefined,
+                justifyContent: isFullscreenMode ? 'center' : undefined,
                 minWidth: '100%',
+                minHeight: isFullscreenMode ? '100dvh' : undefined,
                 width: isFullscreenMode ? '100%' : undefined,
               },
               '& img': {

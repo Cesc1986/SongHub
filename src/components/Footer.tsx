@@ -13,7 +13,7 @@ export default function Nav({}: {}): JSX.Element {
         direction={'row'}
         justifyContent="space-between"
         alignItems={'center'}
-        px={0}
+        px={'5px'}
         py={2}
         flexWrap={'nowrap'}
         gap={2}
