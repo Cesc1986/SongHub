@@ -39,7 +39,7 @@ export default function Nav({
 
   return (
     <>
-      <Box px={4}>
+      <Box px={0}>
         <Flex h={16} alignItems={'center'} justifyContent={'space-between'}>
           <Flex alignItems={'center'}>
             <Link as={NextLink} href="/" style={{ textDecoration: 'none' }}>

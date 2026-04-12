@@ -123,7 +123,7 @@ export default function Search(): JSX.Element {
       >
         <Flex>
           <HStack
-            mx={4}
+            mx={'5px'}
             pb={2}
             w="100%"
             borderBottomStyle={'solid'}
@@ -287,7 +287,7 @@ export default function Search(): JSX.Element {
           />
         ) : (
           <Flex
-            px={4}
+            px={'5px'}
             py={6}
             flex={1}
             direction={'column'}

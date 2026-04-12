@@ -64,6 +64,10 @@ export default function TabPanel({
   const toast = useToast()
 
   const isImageTab = selectedTab?.url?.startsWith('local://') || selectedTabContent?.url?.startsWith('local://')
+  const isLikelyImageContent =
+    isImageTab || Boolean(selectedTabContent?.htmlTab?.includes('<img'))
+  const [isImageContentRuntime, setIsImageContentRuntime] = useState<boolean>(false)
+  const isImageContentMode = isLikelyImageContent || isImageContentRuntime
   const [editArtist, setEditArtist] = useState<string>('')
   const [editName, setEditName] = useState<string>('')
 
@@ -103,39 +107,68 @@ export default function TabPanel({
   const fullscreenClickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isFullscreenMode, setIsFullscreenMode] = useState<boolean>(false)
   const fullscreenBgBase = useColorModeValue('white', 'gray.900')
-  const fullscreenBg = isImageTab ? 'black' : fullscreenBgBase
+  const fullscreenBg = isImageContentMode ? 'black' : fullscreenBgBase
 
   const toggleFullscreen = () => {
     setIsFullscreenMode((prev) => !prev)
   }
 
   const handleImageContentClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!isImageTab) return
+    const hasImgInTarget = Boolean(event.currentTarget.querySelector('img'))
+    if (hasImgInTarget) {
+      setIsImageContentRuntime(true)
+    }
+
+    if (!(isImageContentMode || hasImgInTarget)) return
 
     // Ignore second click from double-click gesture (used for zoom)
     if (event.detail > 1) return
+
+    const targetImgs = Array.from(event.currentTarget.querySelectorAll('img')) as HTMLImageElement[]
 
     if (isFullscreenMode) {
       if (fullscreenClickTimeoutRef.current) {
         clearTimeout(fullscreenClickTimeoutRef.current)
       }
       fullscreenClickTimeoutRef.current = setTimeout(() => {
+        targetImgs.forEach((img) => {
+          if (img.dataset.prevWidth !== undefined) img.style.width = img.dataset.prevWidth || ''
+          if (img.dataset.prevMaxWidth !== undefined) img.style.maxWidth = img.dataset.prevMaxWidth || ''
+          if (img.dataset.prevMargin !== undefined) img.style.margin = img.dataset.prevMargin || ''
+          if (img.dataset.prevDisplay !== undefined) img.style.display = img.dataset.prevDisplay || ''
+        })
         setIsFullscreenMode(false)
       }, 220)
       return
     }
 
+    targetImgs.forEach((img) => {
+      if (!img.dataset.prevWidth) img.dataset.prevWidth = img.style.width || ''
+      if (!img.dataset.prevMaxWidth) img.dataset.prevMaxWidth = img.style.maxWidth || ''
+      if (!img.dataset.prevMargin) img.dataset.prevMargin = img.style.margin || ''
+      if (!img.dataset.prevDisplay) img.dataset.prevDisplay = img.style.display || ''
+
+      img.style.width = '100%'
+      img.style.maxWidth = '100%'
+      img.style.margin = '0 auto'
+      img.style.display = 'block'
+    })
+
     setIsFullscreenMode(true)
   }
 
   const handleImageDoubleClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!isImageTab) return
+    if (!isImageContentMode) return
     event.preventDefault()
 
     if (fullscreenClickTimeoutRef.current) {
       clearTimeout(fullscreenClickTimeoutRef.current)
       fullscreenClickTimeoutRef.current = null
     }
+
+    // Double-click zoom only in normal mode.
+    // Fullscreen image should remain fit-to-screen without horizontal scrolling.
+    if (isFullscreenMode) return
 
     setImageZoom((prev) => {
       if (prev >= 200) return 100
@@ -202,11 +235,60 @@ export default function TabPanel({
     }
   }, [])
 
+  useEffect(() => {
+    if (isImageContentMode && isFullscreenMode) {
+      // Image fullscreen is purely visual; disable autoscroll there.
+      setShowAutoscroll(false)
+      // ensure fit-to-screen default when entering fullscreen
+      setImageZoom(100)
+    }
+
+    const root = contentContainerRef.current
+    if (!root) return
+
+    const imgs = Array.from(root.querySelectorAll('img')) as HTMLImageElement[]
+    imgs.forEach((img) => {
+      const wrapper = img.parentElement as HTMLElement | null
+
+      if (isImageContentMode && isFullscreenMode) {
+        if (!img.dataset.prevWidth) img.dataset.prevWidth = img.style.width || ''
+        if (!img.dataset.prevMaxWidth) img.dataset.prevMaxWidth = img.style.maxWidth || ''
+        if (!img.dataset.prevMargin) img.dataset.prevMargin = img.style.margin || ''
+        if (!img.dataset.prevDisplay) img.dataset.prevDisplay = img.style.display || ''
+
+        img.style.width = '100%'
+        img.style.maxWidth = '100%'
+        img.style.margin = '0 auto'
+        img.style.display = 'block'
+
+        if (wrapper) {
+          if (wrapper.dataset.prevPadding === undefined) {
+            wrapper.dataset.prevPadding = wrapper.style.padding || ''
+          }
+          wrapper.style.padding = '0px'
+        }
+      } else {
+        if (img.dataset.prevWidth !== undefined) img.style.width = img.dataset.prevWidth || ''
+        if (img.dataset.prevMaxWidth !== undefined) img.style.maxWidth = img.dataset.prevMaxWidth || ''
+        if (img.dataset.prevMargin !== undefined) img.style.margin = img.dataset.prevMargin || ''
+        if (img.dataset.prevDisplay !== undefined) img.style.display = img.dataset.prevDisplay || ''
+
+        if (wrapper && wrapper.dataset.prevPadding !== undefined) {
+          wrapper.style.padding = wrapper.dataset.prevPadding || ''
+        }
+      }
+    })
+  }, [isImageContentMode, isFullscreenMode])
+
+  useEffect(() => {
+    setIsImageContentRuntime(false)
+  }, [selectedTabContent?.url])
+
   return (
     <>
       <Box
         h="100%"
-        px={5}
+        px={'5px'}
         py={2}
         borderBottomStyle={'solid'}
         borderBottomWidth={selectedTabContent && '1px'}
@@ -401,7 +483,7 @@ export default function TabPanel({
 
       <Flex
         ref={contentContainerRef}
-        p={isFullscreenMode ? 0 : 5}
+        p={isFullscreenMode ? 0 : '5px'}
         h={isFullscreenMode ? '100dvh' : '100%'}
         w="100%"
         flexGrow={1}
@@ -416,30 +498,31 @@ export default function TabPanel({
       >
         <Skeleton display={'flex'} w="100%" isLoaded={!isLoading}>
           <Flex
-            ref={isImageTab ? imageContainerRef : undefined}
+            ref={isImageContentMode ? imageContainerRef : undefined}
             h={isFullscreenMode ? 'auto' : '100%'}
             minH={isFullscreenMode ? '100dvh' : undefined}
             w="100%"
-            px={isFullscreenMode && !isImageTab ? '3px' : 0}
+            px={isFullscreenMode && !isImageContentMode ? '5px' : 0}
             fontSize={`${tabFontSize / 100}rem !important`}
             data-tab-content="true"
-            cursor={isImageTab ? (isFullscreenMode ? 'zoom-out' : 'zoom-in') : 'default'}
+            cursor={isImageContentMode ? (isFullscreenMode ? 'zoom-out' : 'zoom-in') : 'default'}
             onClick={handleImageContentClick}
             onDoubleClick={handleImageDoubleClick}
-            sx={isImageTab ? {
-              overflow: 'auto',
+            sx={isImageContentMode ? {
+              overflowY: 'auto',
+              overflowX: isFullscreenMode ? 'hidden' : 'auto',
               textAlign: 'center',
               background: isFullscreenMode ? 'black' : undefined,
               '& .image-tab-container': {
                 display: isFullscreenMode ? 'block' : 'inline-block',
-                minWidth: isFullscreenMode ? '100vw' : '100%',
-                width: isFullscreenMode ? '100vw' : undefined,
+                minWidth: '100%',
+                width: isFullscreenMode ? '100%' : undefined,
               },
               '& img': {
                 display: 'block !important',
-                maxWidth: 'none !important',
-                width: isFullscreenMode ? `${imageZoom}vw !important` : `${imageZoom}% !important`,
-                height: 'auto !important',
+                maxWidth: isFullscreenMode ? '100%' : 'none',
+                width: isFullscreenMode ? '100%' : `${imageZoom}%`,
+                height: 'auto',
                 margin: '0 auto',
               }
             } : undefined}
@@ -450,44 +533,48 @@ export default function TabPanel({
       </Flex>
       {isFullscreenMode && (
         <Flex position="fixed" top={3} right={3} zIndex={1600} gap={2} alignItems="center" flexWrap="wrap" justifyContent="flex-end">
-          <Button
-            size="sm"
-            variant="outline"
-            boxShadow="md"
-            _hover={{ bg: 'blue.400', color: 'white' }}
-            _active={{ bg: 'fadebp', color: 'white' }}
-            isActive={showAutoscroll}
-            leftIcon={<Icon as={FaCircleArrowDown} />}
-            onClick={() => setShowAutoscroll((prev) => !prev)}
-          >
-            Autoscroll
-          </Button>
-
-          {showAutoscroll && (
+          {!isImageContentMode && (
             <>
-              <IconButton
+              <Button
                 size="sm"
                 variant="outline"
                 boxShadow="md"
                 _hover={{ bg: 'blue.400', color: 'white' }}
                 _active={{ bg: 'fadebp', color: 'white' }}
-                aria-label="Autoscroll slower"
-                icon={<MinusIcon />}
-                onClick={() => setAutoscrollSpeed((s) => Math.max(s - 3, 2))}
-              />
-              <Badge variant="subtle" fontSize="sm" color="blue.500" px={2} py={1}>
-                {autoscrollSpeed} px/s
-              </Badge>
-              <IconButton
-                size="sm"
-                variant="outline"
-                boxShadow="md"
-                _hover={{ bg: 'blue.400', color: 'white' }}
-                _active={{ bg: 'fadebp', color: 'white' }}
-                aria-label="Autoscroll faster"
-                icon={<AddIcon />}
-                onClick={() => setAutoscrollSpeed((s) => Math.min(s + 5, 100))}
-              />
+                isActive={showAutoscroll}
+                leftIcon={<Icon as={FaCircleArrowDown} />}
+                onClick={() => setShowAutoscroll((prev) => !prev)}
+              >
+                Autoscroll
+              </Button>
+
+              {showAutoscroll && (
+                <>
+                  <IconButton
+                    size="sm"
+                    variant="outline"
+                    boxShadow="md"
+                    _hover={{ bg: 'blue.400', color: 'white' }}
+                    _active={{ bg: 'fadebp', color: 'white' }}
+                    aria-label="Autoscroll slower"
+                    icon={<MinusIcon />}
+                    onClick={() => setAutoscrollSpeed((s) => Math.max(s - 3, 2))}
+                  />
+                  <Badge variant="subtle" fontSize="sm" color="blue.500" px={2} py={1}>
+                    {autoscrollSpeed} px/s
+                  </Badge>
+                  <IconButton
+                    size="sm"
+                    variant="outline"
+                    boxShadow="md"
+                    _hover={{ bg: 'blue.400', color: 'white' }}
+                    _active={{ bg: 'fadebp', color: 'white' }}
+                    aria-label="Autoscroll faster"
+                    icon={<AddIcon />}
+                    onClick={() => setAutoscrollSpeed((s) => Math.min(s + 5, 100))}
+                  />
+                </>
+              )}
             </>
           )}
 
