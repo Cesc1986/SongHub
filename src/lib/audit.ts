@@ -40,6 +40,7 @@ export interface TrashEntry {
 const SAVED_DIR = path.join(process.cwd(), 'saved-tabs')
 const ADMIN_DIR = path.join(SAVED_DIR, 'admin')
 const TRASH_FILES_DIR = path.join(SAVED_DIR, '.trash')
+const SETLIST_FILE = path.join(SAVED_DIR, 'setlists.json')
 
 const ACCESS_LOG_FILE = path.join(ADMIN_DIR, 'access-log.ndjson')
 const CHANGE_LOG_FILE = path.join(ADMIN_DIR, 'change-log.ndjson')
@@ -75,6 +76,22 @@ function readNdjson(filePath: string, limit = 500): any[] {
     })
     .filter(Boolean)
     .reverse()
+}
+
+function loadSetlists(): Record<string, any[]> {
+  ensureDirs()
+  if (!fs.existsSync(SETLIST_FILE)) return {}
+  try {
+    const parsed = JSON.parse(fs.readFileSync(SETLIST_FILE, 'utf-8'))
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveSetlists(setlists: Record<string, any[]>) {
+  ensureDirs()
+  fs.writeFileSync(SETLIST_FILE, JSON.stringify(setlists, null, 2), 'utf-8')
 }
 
 export function getClientIp(req: NextApiRequest): string {
@@ -123,6 +140,17 @@ function saveTrashIndex(entries: TrashEntry[]) {
 
 function makeId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+function uniqueRestoreFilename(baseName: string): string {
+  const safeBase = path.basename(baseName)
+  const candidatePath = path.join(SAVED_DIR, safeBase)
+  if (!fs.existsSync(candidatePath)) return safeBase
+
+  const ext = path.extname(safeBase)
+  const stem = safeBase.slice(0, -ext.length)
+  const restored = `${stem} (restored ${Date.now()})${ext}`
+  return restored
 }
 
 export function moveSongToTrash(params: {
@@ -182,6 +210,73 @@ export function pushSetlistTrash(params: {
 
 export function listTrash(): TrashEntry[] {
   return loadTrashIndex()
+}
+
+export function restoreTrashById(id: string): {
+  success: boolean
+  restored: boolean
+  type?: string
+  message?: string
+} {
+  const index = loadTrashIndex()
+  const found = index.find((e) => e.id === id)
+  if (!found) return { success: true, restored: false, message: 'Not found' }
+
+  if (found.type === 'song_file') {
+    if (!found.trashPath || !found.originalPath) {
+      return { success: false, restored: false, message: 'Missing song trash metadata' }
+    }
+
+    const source = path.join(TRASH_FILES_DIR, found.trashPath)
+    if (!fs.existsSync(source)) {
+      return { success: false, restored: false, message: 'Trash file missing' }
+    }
+
+    const restoredName = uniqueRestoreFilename(found.originalPath)
+    const target = path.join(SAVED_DIR, restoredName)
+    fs.renameSync(source, target)
+
+    saveTrashIndex(index.filter((e) => e.id !== id))
+    return { success: true, restored: true, type: found.type }
+  }
+
+  if (found.type === 'setlist_day') {
+    const payload = found.payload || {}
+    const date = payload?.date
+    const entries = Array.isArray(payload?.entries) ? payload.entries : []
+    if (!date) {
+      return { success: false, restored: false, message: 'Missing setlist date' }
+    }
+
+    const setlists = loadSetlists()
+    setlists[date] = entries.map((e: any, i: number) => ({ ...e, order: i + 1 }))
+    saveSetlists(setlists)
+
+    saveTrashIndex(index.filter((e) => e.id !== id))
+    return { success: true, restored: true, type: found.type }
+  }
+
+  // Legacy support: restore single setlist entry from older trash items
+  if (found.type === 'setlist_entry') {
+    const payload = found.payload || {}
+    const date = payload?.date
+    const entry = payload?.entry
+    if (!date || !entry) {
+      return { success: false, restored: false, message: 'Missing setlist entry payload' }
+    }
+
+    const setlists = loadSetlists()
+    const arr = Array.isArray(setlists[date]) ? setlists[date] : []
+    const exists = arr.some((e: any) => e.filename === entry.filename)
+    if (!exists) arr.push(entry)
+    setlists[date] = arr.map((e: any, i: number) => ({ ...e, order: i + 1 }))
+    saveSetlists(setlists)
+
+    saveTrashIndex(index.filter((e) => e.id !== id))
+    return { success: true, restored: true, type: found.type }
+  }
+
+  return { success: false, restored: false, message: 'Unsupported trash type' }
 }
 
 export function purgeTrashById(id: string): { success: boolean; removed: boolean } {

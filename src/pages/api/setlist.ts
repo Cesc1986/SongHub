@@ -96,18 +96,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const setlists = loadSetlists()
     if (filename && typeof filename === 'string') {
-      // Remove single entry
-      const deletedEntry = (setlists[date] || []).find((e) => e.filename === filename)
-      if (deletedEntry) {
-        pushSetlistTrash({
-          type: 'setlist_entry',
-          deletedBy: actor,
-          deletedByRole: role,
-          ip,
-          payload: { date, entry: deletedEntry },
-        })
-      }
-
+      // Remove single entry (no trash entry by request)
       setlists[date] = (setlists[date] || []).filter(e => e.filename !== filename)
       if (setlists[date].length === 0) {
         delete setlists[date]

@@ -22,7 +22,10 @@ export default function Layout({ children }: LayoutProps): JSX.Element {
   return (
     <>
       <Backdrop refBackdrop={refBackdrop} />
-      <Container maxW="100%" px={0}>
+      <Container
+        maxW={{ base: '100%', md: '1024px', xl: '1280px' }}
+        px={{ base: '5px', md: '30px', xl: '50px' }}
+      >
         <Flex minH={'100vh'} direction={'column'}>
           <Nav refBackdrop={refBackdrop} />
           <Flex grow={1} direction={flexDirectionContent}>

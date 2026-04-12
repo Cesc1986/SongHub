@@ -92,8 +92,11 @@ Admin-only page: `/admin`
 Features:
 - Access log (who logged in, when, with which IP)
 - Change log (song create/delete/rename/save actions)
-- Trash management (song/setlist deletes)
-  - only admin can permanently delete single/all trash items
+- Trash management:
+  - deleted songs are moved to trash
+  - only deleted full setlist days are stored in trash (not single entry removals)
+  - admin can restore songs/setlist-days from trash
+  - admin can permanently delete single/all trash items
 
 ## License
 

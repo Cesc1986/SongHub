@@ -73,6 +73,33 @@ export default function AdminPage(): JSX.Element {
     loadAll()
   }, [])
 
+  const restoreTrashItem = async (id: string) => {
+    const res = await fetch('/api/admin/trash', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+
+    if (res.ok) {
+      toast({
+        description: 'Element wiederhergestellt',
+        status: 'success',
+        duration: 1500,
+        position: 'top-right',
+      })
+      loadAll()
+      return
+    }
+
+    const err = await res.json().catch(() => ({}))
+    toast({
+      description: err?.message || 'Wiederherstellung fehlgeschlagen',
+      status: 'error',
+      duration: 2200,
+      position: 'top-right',
+    })
+  }
+
   const purgeTrashItem = async (id: string) => {
     const res = await fetch(`/api/admin/trash?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
@@ -106,7 +133,7 @@ export default function AdminPage(): JSX.Element {
       <Head>
         <title>Admin - Song Hub</title>
       </Head>
-      <Flex direction="column" px={'5px'} py={4}>
+      <Flex direction="column" px={0} py={4}>
         <Flex justify="space-between" align="center" mb={3}>
           <Heading size="md">Admin Center</Heading>
           <Button size="sm" onClick={loadAll} variant="outline">
@@ -181,14 +208,24 @@ export default function AdminPage(): JSX.Element {
                             {item.originalPath || JSON.stringify(item.payload || {}).slice(0, 180)}
                           </Text>
                         </Box>
-                        <Button
-                          size="xs"
-                          colorScheme="red"
-                          variant="ghost"
-                          onClick={() => purgeTrashItem(item.id)}
-                        >
-                          Endgültig löschen
-                        </Button>
+                        <Flex gap={2}>
+                          <Button
+                            size="xs"
+                            colorScheme="green"
+                            variant="ghost"
+                            onClick={() => restoreTrashItem(item.id)}
+                          >
+                            Wiederherstellen
+                          </Button>
+                          <Button
+                            size="xs"
+                            colorScheme="red"
+                            variant="ghost"
+                            onClick={() => purgeTrashItem(item.id)}
+                          >
+                            Endgültig löschen
+                          </Button>
+                        </Flex>
                       </Flex>
                     </Box>
                   ))}

@@ -184,7 +184,7 @@ export default function Home(): JSX.Element {
         <title>Song Hub</title>
       </Head>
       <Fade style={{ display: 'flex', flexGrow: '1' }} in={true}>
-        <Flex w="100%" px={'5px'} py={{ base: 4, md: 8 }} direction="column" maxW="100%" mx="auto">
+        <Flex w="100%" px={0} py={{ base: 4, md: 8 }} direction="column" maxW="100%" mx="auto">
 
           <Tabs index={tabIndex} onChange={handleTabChange} variant="soft-rounded" colorScheme="blue" mb={4}>
             <TabList>
