@@ -11,23 +11,12 @@ export default function useBackgroundTabs(
   const isImported = Boolean(importedTab && importedTab.url === url)
   const isLocalUrl = url.startsWith('local://')
 
-  // If sessionStorage has a cached saved tab for this URL, skip network fetch entirely
-  let hasCachedTab = false
-  try {
-    if (typeof window !== 'undefined') {
-      const raw = sessionStorage.getItem('savedTabCache')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed.url === url) hasCachedTab = true
-      }
-    }
-  } catch {}
-
   return useQuery(
     ['getBackgroundTab', url, fontSize, widthBrowser],
     async ({ signal }) => getDatasTab(url, fontSize, widthBrowser, signal),
     {
-      enabled: !isImported && !hasCachedTab && !isLocalUrl && url.length > 0,
+      // Keep background adaptation for remote tabs, skip only for local image tabs/imported tabs
+      enabled: !isImported && !isLocalUrl && url.length > 0,
       initialData: isImported ? importedTab : undefined,
       initialDataUpdatedAt: isImported ? Date.now() : undefined,
       staleTime: isImported ? Infinity : 0,
