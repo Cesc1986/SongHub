@@ -1,4 +1,3 @@
-import { getSpotifyAccessToken } from './../api/spotify'
 import {
   Tab,
   Pagination,
@@ -236,6 +235,5 @@ export async function getTab(
   await tabResponsive?.page?.close()
 
   tabParsed.tabInfos.htmlTab = tabResponsive?.htmlTab
-  const { access_token } = await getSpotifyAccessToken()
-  return { tab: tabParsed.tabInfos, spotify_access_token: access_token }
+  return { tab: tabParsed.tabInfos }
 }

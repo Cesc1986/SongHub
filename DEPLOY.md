@@ -41,6 +41,7 @@ curl http://localhost:3005/api/health
 Expected:
 - `status: "ok"`
 - `authConfigured: true`
+- `performance.tabApi` and `performance.puppeteer` stats present
 
 ## 4) Diagnostics
 
@@ -50,6 +51,15 @@ docker compose logs -f songhub
 ```
 
 `start.sh` prints whether auth username/password are configured (without leaking the password).
+
+Optional performance variables (in `.env`):
+
+```env
+SONGHUB_TAB_CACHE_TTL_MS=900000
+SONGHUB_TAB_CACHE_MAX_ITEMS=200
+SONGHUB_TAB_SCRAPE_CONCURRENCY=2
+SONGHUB_PUPPETEER_PAGE_CONCURRENCY=4
+```
 
 ## 5) Access
 

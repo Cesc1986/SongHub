@@ -121,7 +121,40 @@ export function formatSearchQuery(args: ApiArgsSearch): ApiArgsSearch {
 
 // Singleton browser instance — started once, reused for all requests
 let sharedBrowser: any = null
-let browserLock = false
+let browserInitPromise: Promise<any> | null = null
+
+const PUPPETEER_PAGE_CONCURRENCY = Number(
+  process.env.SONGHUB_PUPPETEER_PAGE_CONCURRENCY || 4,
+)
+let activePageCount = 0
+const pageWaiters: Array<() => void> = []
+
+async function acquirePageSlot(): Promise<() => void> {
+  if (activePageCount >= PUPPETEER_PAGE_CONCURRENCY) {
+    await new Promise<void>((resolve) => pageWaiters.push(resolve))
+  }
+
+  activePageCount += 1
+  let released = false
+
+  return () => {
+    if (released) return
+    released = true
+    activePageCount = Math.max(0, activePageCount - 1)
+    const next = pageWaiters.shift()
+    if (next) next()
+  }
+}
+
+export function getPuppeteerStats() {
+  return {
+    pageConcurrency: PUPPETEER_PAGE_CONCURRENCY,
+    activePages: activePageCount,
+    queuedPageRequests: pageWaiters.length,
+    browserReady: Boolean(sharedBrowser),
+    browserStarting: Boolean(browserInitPromise),
+  }
+}
 
 async function getSharedBrowser(): Promise<any> {
   // If browser exists and is connected, return it
@@ -134,15 +167,14 @@ async function getSharedBrowser(): Promise<any> {
     }
   }
 
-  // Wait if another request is starting the browser
-  while (browserLock) {
-    await new Promise(r => setTimeout(r, 100))
+  // If browser startup is already running, await the same promise
+  if (browserInitPromise) {
+    return browserInitPromise
   }
-  if (sharedBrowser) return sharedBrowser
 
-  browserLock = true
-  try {
-    const chromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH ||
+  browserInitPromise = (async () => {
+    const chromiumPath =
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
       (process.platform === 'linux' ? '/usr/bin/chromium' : undefined)
 
     const { browser } = await connect({
@@ -168,10 +200,15 @@ async function getSharedBrowser(): Promise<any> {
       ],
       turnstile: true,
     })
+
     sharedBrowser = browser
     return browser
+  })()
+
+  try {
+    return await browserInitPromise
   } finally {
-    browserLock = false
+    browserInitPromise = null
   }
 }
 
@@ -179,7 +216,24 @@ export async function getPuppeteerConf(
   options: PuppeteerOptions = {},
 ): Promise<{ page: Page; browser: any }> {
   const browser = await getSharedBrowser()
-  const page: Page = await browser.newPage()
+  const releasePageSlot = await acquirePageSlot()
+
+  let page: Page
+  try {
+    page = await browser.newPage()
+  } catch (error) {
+    releasePageSlot()
+    throw error
+  }
+
+  const originalClose = page.close.bind(page)
+  ;(page as any).close = async (...args: any[]) => {
+    try {
+      return await originalClose(...args)
+    } finally {
+      releasePageSlot()
+    }
+  }
 
   await page.setViewport(
     options.widthBrowser && options.heightBrowser

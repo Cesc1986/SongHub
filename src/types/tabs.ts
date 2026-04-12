@@ -27,7 +27,6 @@ export interface ApiRequestTab {
 
 export interface ApiResponseTab {
   tab: Tab
-  spotify_access_token: SpotifyAccessToken
 }
 
 export interface Pagination {
@@ -113,8 +112,3 @@ export type VexchordsChord = ('x' | number)[][]
 
 export type TabTypes = 'All' | 'Video' | 'Tab' | 'Chords' | 'Bass' | 'Ukulele'
 
-export type SpotifyAccessToken = string | boolean
-
-export interface SpotifyAuthResponse {
-  access_token: SpotifyAccessToken
-}
