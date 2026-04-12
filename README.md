@@ -29,8 +29,9 @@ SONGHUB_LOGIN_PASSWORD=your_strong_password
 ```
 
 For Docker Compose:
-- Put these values in a `.env` file (same folder as `docker-compose.yml`)
-- `docker-compose.yml` passes them into the container at runtime
+- Copy `.env.example` to `.env`
+- Adjust username/password in `.env`
+- `docker-compose.yml` passes these variables into the container at runtime
 
 ## Deployment (Docker Compose)
 
@@ -43,6 +44,16 @@ docker compose up -d --build
 Then open:
 
 - http://localhost:3005
+
+## Healthcheck & Diagnostics
+
+- Health endpoint: `http://localhost:3005/api/health`
+- Container health status: `docker compose ps`
+- Live logs (startup diagnostics incl. auth config presence):
+
+```bash
+docker compose logs -f songhub
+```
 
 ## Release Notes (v1.2)
 
