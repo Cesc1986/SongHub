@@ -1,5 +1,25 @@
 # UltimateTab Changelog
 
+## v1.2 - 2026-04-12
+
+### ✨ Release Notes
+
+- **Setlist-Funktionalität hinzugefügt**
+  - Songs/Tabs können einer Setlist mit Datum zugeordnet werden.
+  - Setlist-Ansicht im Hauptbereich integriert.
+
+- **Passwort-Login hinzugefügt**
+  - Zugriff auf Seiten und APIs ist jetzt hinter Login geschützt.
+  - Login-Credentials sind über `.env.local` konfigurierbar (`SONGHUB_LOGIN_USERNAME`, `SONGHUB_LOGIN_PASSWORD`).
+
+### 🔒 Security / Zugriff
+
+- Ohne Login erfolgt Redirect auf `/login`.
+- Nach Login sind Header, Suche und Menü normal verfügbar.
+- Logout sperrt den Zugriff wieder korrekt.
+
+---
+
 ## 2026-03-31 - Photo Upload Update
 
 ### ✨ Neue Features
