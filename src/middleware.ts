@@ -1,13 +1,12 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { AUTH_COOKIE_NAME, AUTH_COOKIE_VALUE } from './src/lib/auth'
+import { AUTH_COOKIE_NAME, AUTH_COOKIE_VALUE } from './lib/auth'
 
 const PUBLIC_PATHS = ['/api/auth/login', '/favicon.ico']
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow next internal assets and static files
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
