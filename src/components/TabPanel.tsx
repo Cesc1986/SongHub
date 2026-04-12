@@ -30,7 +30,7 @@ import { GiCrowbar } from 'react-icons/gi'
 import Difficulty from './Difficulty'
 import ChordDiagram from './ChordDiagram'
 import { Tab, UGChordCollection } from '../types/tabs'
-import { MouseEventHandler, useEffect, useRef, useState } from 'react'
+import { MouseEvent, MouseEventHandler, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { FaPlayCircle } from 'react-icons/fa'
 import { MdFullscreenExit } from 'react-icons/md'
@@ -97,19 +97,50 @@ export default function TabPanel({
   const [showAutoscroll, setShowAutoscroll] = useState<boolean>(false)
   const [showBackingTrack, setShowBackingTrack] = useState<boolean>(false)
   const [imageZoom, setImageZoom] = useState<number>(100)
+  const [autoscrollSpeed, setAutoscrollSpeed] = useState<number>(10)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const contentContainerRef = useRef<HTMLDivElement>(null)
+  const fullscreenClickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isFullscreenMode, setIsFullscreenMode] = useState<boolean>(false)
-  const fullscreenBg = useColorModeValue('white', 'gray.900')
+  const fullscreenBgBase = useColorModeValue('white', 'gray.900')
+  const fullscreenBg = isImageTab ? 'black' : fullscreenBgBase
 
   const toggleFullscreen = () => {
     setIsFullscreenMode((prev) => !prev)
   }
 
-  const openImageFullscreen = () => {
-    if (isImageTab && !isFullscreenMode) {
-      setIsFullscreenMode(true)
+  const handleImageContentClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!isImageTab) return
+
+    // Ignore second click from double-click gesture (used for zoom)
+    if (event.detail > 1) return
+
+    if (isFullscreenMode) {
+      if (fullscreenClickTimeoutRef.current) {
+        clearTimeout(fullscreenClickTimeoutRef.current)
+      }
+      fullscreenClickTimeoutRef.current = setTimeout(() => {
+        setIsFullscreenMode(false)
+      }, 220)
+      return
     }
+
+    setIsFullscreenMode(true)
+  }
+
+  const handleImageDoubleClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!isImageTab) return
+    event.preventDefault()
+
+    if (fullscreenClickTimeoutRef.current) {
+      clearTimeout(fullscreenClickTimeoutRef.current)
+      fullscreenClickTimeoutRef.current = null
+    }
+
+    setImageZoom((prev) => {
+      if (prev >= 200) return 100
+      return prev + 25
+    })
   }
 
   const changeZoom = (delta: number) => {
@@ -162,6 +193,14 @@ export default function TabPanel({
       document.body.style.overflow = originalOverflow || ''
     }
   }, [isFullscreenMode])
+
+  useEffect(() => {
+    return () => {
+      if (fullscreenClickTimeoutRef.current) {
+        clearTimeout(fullscreenClickTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <>
@@ -381,22 +420,27 @@ export default function TabPanel({
             h={isFullscreenMode ? 'auto' : '100%'}
             minH={isFullscreenMode ? '100dvh' : undefined}
             w="100%"
+            px={isFullscreenMode && !isImageTab ? '3px' : 0}
             fontSize={`${tabFontSize / 100}rem !important`}
             data-tab-content="true"
-            cursor={isImageTab && !isFullscreenMode ? 'zoom-in' : 'default'}
-            onClick={openImageFullscreen}
+            cursor={isImageTab ? (isFullscreenMode ? 'zoom-out' : 'zoom-in') : 'default'}
+            onClick={handleImageContentClick}
+            onDoubleClick={handleImageDoubleClick}
             sx={isImageTab ? {
               overflow: 'auto',
               textAlign: 'center',
+              background: isFullscreenMode ? 'black' : undefined,
               '& .image-tab-container': {
-                display: 'inline-block',
-                minWidth: '100%',
+                display: isFullscreenMode ? 'block' : 'inline-block',
+                minWidth: isFullscreenMode ? '100vw' : '100%',
+                width: isFullscreenMode ? '100vw' : undefined,
               },
               '& img': {
-                display: 'inline-block !important',
+                display: 'block !important',
                 maxWidth: 'none !important',
-                width: `${imageZoom}% !important`,
+                width: isFullscreenMode ? `${imageZoom}vw !important` : `${imageZoom}% !important`,
                 height: 'auto !important',
+                margin: '0 auto',
               }
             } : undefined}
           >
@@ -405,7 +449,7 @@ export default function TabPanel({
         </Skeleton>
       </Flex>
       {isFullscreenMode && (
-        <Flex position="fixed" top={3} right={3} zIndex={1600} gap={2}>
+        <Flex position="fixed" top={3} right={3} zIndex={1600} gap={2} alignItems="center" flexWrap="wrap" justifyContent="flex-end">
           <Button
             size="sm"
             variant="outline"
@@ -418,6 +462,35 @@ export default function TabPanel({
           >
             Autoscroll
           </Button>
+
+          {showAutoscroll && (
+            <>
+              <IconButton
+                size="sm"
+                variant="outline"
+                boxShadow="md"
+                _hover={{ bg: 'blue.400', color: 'white' }}
+                _active={{ bg: 'fadebp', color: 'white' }}
+                aria-label="Autoscroll slower"
+                icon={<MinusIcon />}
+                onClick={() => setAutoscrollSpeed((s) => Math.max(s - 3, 2))}
+              />
+              <Badge variant="subtle" fontSize="sm" color="blue.500" px={2} py={1}>
+                {autoscrollSpeed} px/s
+              </Badge>
+              <IconButton
+                size="sm"
+                variant="outline"
+                boxShadow="md"
+                _hover={{ bg: 'blue.400', color: 'white' }}
+                _active={{ bg: 'fadebp', color: 'white' }}
+                aria-label="Autoscroll faster"
+                icon={<AddIcon />}
+                onClick={() => setAutoscrollSpeed((s) => Math.min(s + 5, 100))}
+              />
+            </>
+          )}
+
           <IconButton
             size="sm"
             variant="outline"
@@ -438,6 +511,9 @@ export default function TabPanel({
         bottomCSS={'17px'}
         scrollContainerRef={contentContainerRef}
         useContainerScroll={isFullscreenMode}
+        hidePanel={isFullscreenMode}
+        scrollSpeed={autoscrollSpeed}
+        setScrollSpeed={setAutoscrollSpeed}
       />
     </>
   )

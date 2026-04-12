@@ -8,7 +8,7 @@ import {
   Button,
   IconButton,
 } from '@chakra-ui/react'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { Dispatch, RefObject, SetStateAction, useEffect, useRef, useState } from 'react'
 import { FaPlayCircle } from 'react-icons/fa'
 
 interface AutoscrollerProps {
@@ -17,6 +17,9 @@ interface AutoscrollerProps {
   isLoading: boolean
   scrollContainerRef?: RefObject<HTMLElement | null>
   useContainerScroll?: boolean
+  hidePanel?: boolean
+  scrollSpeed?: number
+  setScrollSpeed?: Dispatch<SetStateAction<number>>
 }
 
 const MIN_SPEED = 2
@@ -31,12 +34,16 @@ export default function Autoscroller({
   isLoading,
   scrollContainerRef,
   useContainerScroll = false,
+  hidePanel = false,
+  scrollSpeed,
+  setScrollSpeed,
 }: AutoscrollerProps): JSX.Element {
   const widthToolsBar = useBreakpointValue({ base: '100%', sm: '50%' })
   const borderColor = useColorModeValue('gray.200', 'gray.600')
 
   const [isEnabled, setIsEnabled] = useState<boolean>(showAutoscroll)
-  const [scrollSpeed, setScrollSpeed] = useState<number>(DEFAULT_SPEED)
+  const [internalScrollSpeed, setInternalScrollSpeed] = useState<number>(DEFAULT_SPEED)
+  const effectiveScrollSpeed = scrollSpeed ?? internalScrollSpeed
 
   const rafRef = useRef<number>(null)
   const lastTimeRef = useRef<number>(null)
@@ -51,8 +58,8 @@ export default function Autoscroller({
 
   // Keep refs in sync
   useEffect(() => {
-    scrollSpeedRef.current = scrollSpeed
-  }, [scrollSpeed])
+    scrollSpeedRef.current = effectiveScrollSpeed
+  }, [effectiveScrollSpeed])
 
   useEffect(() => {
     isEnabledRef.current = isEnabled
@@ -157,9 +164,17 @@ export default function Autoscroller({
     setIsEnabled((prev) => !prev)
   }
 
+  const updateSpeed = (updater: (current: number) => number) => {
+    if (setScrollSpeed) {
+      setScrollSpeed((current) => updater(current))
+      return
+    }
+    setInternalScrollSpeed((current) => updater(current))
+  }
+
   return (
     <>
-      {showAutoscroll && (
+      {showAutoscroll && !hidePanel && (
         <Flex
           position={'fixed'}
           width={widthToolsBar}
@@ -198,7 +213,7 @@ export default function Autoscroller({
             {isEnabled ? 'Stop' : 'Start'}
           </Button>
           <Text px={1} fontSize="sm">
-            {scrollSpeed} px/s
+            {effectiveScrollSpeed} px/s
           </Text>
           <Flex>
             <IconButton
@@ -210,7 +225,7 @@ export default function Autoscroller({
               py="4"
               mr={1}
               onClick={() =>
-                setScrollSpeed((s) => Math.max(s - STEP_DOWN, MIN_SPEED))
+                updateSpeed((s) => Math.max(s - STEP_DOWN, MIN_SPEED))
               }
               aria-label="Slower"
               icon={<MinusIcon />}
@@ -223,7 +238,7 @@ export default function Autoscroller({
               px="3"
               py="4"
               onClick={() =>
-                setScrollSpeed((s) => Math.min(s + STEP_UP, MAX_SPEED))
+                updateSpeed((s) => Math.min(s + STEP_UP, MAX_SPEED))
               }
               aria-label="Faster"
               icon={<AddIcon />}
