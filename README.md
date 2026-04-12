@@ -37,8 +37,16 @@ For Docker Compose:
 
 Run SongHub with Docker Compose and expose port `3005`.
 
+**First deploy / after code updates:**
+
 ```bash
 docker compose up -d --build
+```
+
+**Only username/password changed (`.env`):** no rebuild needed
+
+```bash
+docker compose up -d --force-recreate
 ```
 
 Detailed deployment steps: see [`DEPLOY.md`](./DEPLOY.md)

@@ -13,6 +13,8 @@ SONGHUB_LOGIN_PASSWORD=passwort
 
 ## 2) Start / update SongHub
 
+First deploy or after code changes:
+
 ```bash
 docker compose up -d --build
 ```
@@ -21,6 +23,13 @@ If only username/password changed, a rebuild is **not** required:
 
 ```bash
 docker compose up -d --force-recreate
+```
+
+Alternative (equivalent) flow:
+
+```bash
+docker compose down
+docker compose up -d
 ```
 
 ## 3) Verify health
