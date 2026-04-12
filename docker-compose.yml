@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  ultimatetab:
+  songhub:
     build: .
-    container_name: ultimatetab
+    container_name: songhub
     restart: unless-stopped
     ports:
       - "3005:3005"
