@@ -1,7 +1,7 @@
 # SongHub
 
 ![SongHub](https://img.shields.io/badge/SongHub-Private%20Tab%20Manager-2563eb?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-v1.4-16a34a?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.5-16a34a?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%2B%20ChakraUI-111827?style=for-the-badge)
 
 SongHub is a private song/tab workspace for musicians: search, save, organize, and prepare setlists in one place.
@@ -26,7 +26,7 @@ Configure login credentials via environment variables:
 ```env
 # Shared app login
 SONGHUB_LOGIN_USERNAME=admin
-SONGHUB_LOGIN_PASSWORD=your_user_password
+SONGHUB_LOGIN_PASSWORD=admin-passwort
 
 # Admin login (required for /admin page)
 SONGHUB_ADMIN_USERNAME=admin
@@ -70,19 +70,11 @@ Then open:
 docker compose logs -f songhub
 ```
 
-## Release Notes (v1.4)
+## Release Notes (v1.5)
 
-- Fullscreen visual polish for mobile and tablet:
-  - photo fullscreen is now edge-to-edge and centered
-  - single tap exits photo fullscreen
-  - double tap used for zoom behavior
-- Text/tab fullscreen usability improvements:
-  - 5px left padding in fullscreen reading mode
-  - autoscroll controls include speed (+/-) when active
-  - content starts below overlay controls to avoid text overlap
-- Layout spacing refinements:
-  - tighter global side spacing across pages
-  - header/footer alignment with homepage song cards
+- Responsive layout updates with clearer breakpoints for iPhone, iPad, and laptop screens
+- Visual polish for fullscreen photo and text/tab viewing
+- Added admin functionality including logging and trash workflow
 - Footer version remains derived from `package.json`
 
 ## Admin Center
