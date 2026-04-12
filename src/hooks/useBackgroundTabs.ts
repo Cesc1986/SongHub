@@ -24,7 +24,7 @@ export default function useBackgroundTabs(
   } catch {}
 
   return useQuery(
-    ['getBackgroundTab', fontSize, widthBrowser],
+    ['getBackgroundTab', url, fontSize, widthBrowser],
     async ({ signal }) => getDatasTab(url, fontSize, widthBrowser, signal),
     {
       enabled: !isImported && !hasCachedTab && !isLocalUrl && url.length > 0,

@@ -8,7 +8,7 @@ function getCachedTab(url: string): Tab | null {
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (parsed.url === url) {
-      sessionStorage.removeItem('savedTabCache') // consume once
+      // Keep cache entry so background hook can also detect and skip network fetch
       return parsed.tab as Tab
     }
   } catch {}
