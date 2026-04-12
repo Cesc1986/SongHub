@@ -9,8 +9,10 @@ import { AppStateProvider } from '../contexts/AppContext'
 import { extendedTheme } from '../theme'
 import '@fontsource/poppins/400.css'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 export default function App({ Component, pageProps }: AppProps): JSX.Element {
+  const router = useRouter()
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -23,20 +25,27 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
       }),
   )
 
+  const isLoginPage = router.pathname === '/login'
+
   return (
     <QueryClientProvider client={queryClient}>
       <ChakraProvider theme={extendedTheme}>
         <AppStateProvider>
-          <Layout>
-            <Head>
-              <meta
-                name="viewport"
-                content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-              />
-            </Head>
-            <GoogleAnalytics trackPageViews strategy="lazyOnload" />
+          <Head>
+            <meta
+              name="viewport"
+              content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+            />
+          </Head>
+          <GoogleAnalytics trackPageViews strategy="lazyOnload" />
+
+          {isLoginPage ? (
             <Component {...pageProps} />
-          </Layout>
+          ) : (
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+          )}
         </AppStateProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </ChakraProvider>

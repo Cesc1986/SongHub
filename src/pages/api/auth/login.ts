@@ -12,7 +12,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(401).json({ error: 'Ungültige Zugangsdaten' })
   }
 
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
+  const forwardedProto = req.headers['x-forwarded-proto']
+  const isHttps =
+    (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) === 'https'
+
+  // Secure-Cookie nur auf HTTPS setzen (sonst funktioniert Login auf http:// nicht)
+  const secure = isHttps ? '; Secure' : ''
   const maxAge = 60 * 60 * 24 * 7
   res.setHeader(
     'Set-Cookie',

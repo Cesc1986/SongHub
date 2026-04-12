@@ -6,7 +6,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
+  const forwardedProto = req.headers['x-forwarded-proto']
+  const isHttps =
+    (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) === 'https'
+  const secure = isHttps ? '; Secure' : ''
   res.setHeader(
     'Set-Cookie',
     `${AUTH_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`,
