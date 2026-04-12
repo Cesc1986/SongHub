@@ -1,13 +1,13 @@
-# Ultimate Tab - Ads-free Ultimate Guitar tabs
+# SongHub - persönliche Song- und Tab-Verwaltung
 
 > [!NOTE]
 > Update 2024/08/07 : The project is once again accessible via the URL: https://ultimate-tab.com 🎉
 
-**Link** : [https://ultimate-tab.com](https://ultimate-tab.com)
+**Lokaler Projektname:** SongHub (ehemals UltimateTab)
 
 **Browser extension** : Ultimate Tab works with [LibRedirect](https://libredirect.github.io/index.html). Download and configure the extension to automatically redirect all Ultimate Guitar links to Ultimate Tab.
 
-A web application that delivers an enhanced, ads-free and fast responsive interface to browse guitar tabs scraped from Ultimate Guitar.
+Eine Webanwendung zum Suchen, Speichern und Verwalten von Songs/Tabs mit Setlist-Funktionen.
 
 ![Ultimate Tab Screenshot](https://i.ibb.co/RYLXkNc/586shots-so.png)
 ![Ultimate Tab Screenshot](https://i.ibb.co/THdSmPK/673shots-so.png)
@@ -36,6 +36,15 @@ Ultimate Tab has been built with a modern stack, including:
 - [React Context API](https://react.dev/reference/react#context-hooks) - Client state management
 - [ChakraUI](https://chakra-ui.com/) - UI Component Library
 - [Vexchords](https://github.com/0xfe/vexchords) - Chords renderer library
+
+## Login-Schutz (einfach)
+
+Diese Instanz ist jetzt mit einfachem Login geschützt:
+
+- Benutzer: `admin`
+- Passwort: `geheim`
+
+Hinweis: Für produktive Nutzung sollte das Passwort über Umgebungsvariablen gesetzt und gehasht gespeichert werden.
 
 ## Installation
 

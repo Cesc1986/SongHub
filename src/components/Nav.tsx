@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react'
 import { HamburgerIcon, MoonIcon, SunIcon } from '@chakra-ui/icons'
 import NextLink from 'next/link'
+import { useRouter } from 'next/router'
 import { MutableRefObject } from 'react'
 import AutocompleteInput from './AutocompleteInput'
 import TabImporter from './TabImporter'
@@ -25,10 +26,17 @@ export default function Nav({
 }: {
   refBackdrop: MutableRefObject<HTMLDivElement>
 }): JSX.Element {
+  const router = useRouter()
   const { colorMode, toggleColorMode } = useColorMode()
   const titleHeader = useBreakpointValue({ base: 'SH', md: 'Song Hub' })
   const { isOpen: isUploaderOpen, onOpen: onUploaderOpen, onClose: onUploaderClose } = useDisclosure()
   const { isOpen: isCameraOpen, onOpen: onCameraOpen, onClose: onCameraClose } = useDisclosure()
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    await router.replace('/login')
+  }
+
   return (
     <>
       <Box px={4}>
@@ -70,6 +78,7 @@ export default function Nav({
                   <TabImporter />
                   <ImageTabUploader isOpen={isUploaderOpen} onClose={onUploaderClose} asMenuItem onMenuItemClick={onUploaderOpen} />
                   <ImageTabUploader isOpen={isCameraOpen} onClose={onCameraClose} cameraMode asCameraMenuItem onCameraMenuItemClick={onCameraOpen} />
+                  <Button size="sm" variant="ghost" m={2} onClick={handleLogout}>Logout</Button>
                 </MenuList>
               </Menu>
             </Stack>
