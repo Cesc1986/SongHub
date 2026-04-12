@@ -1,22 +1,58 @@
-# SongHub - persönliche Song- und Tab-Verwaltung
+# SongHub
 
-**Song Hub** : Local song/tab  saving functionality including song viewer and photo upload functionality for your own songs.
+SongHub is a modern web app for searching, saving, and organizing guitar songs/tabs, including setlist planning and secure private access.
 
-Eine Webanwendung zum Suchen, Speichern und Verwalten von Songs/Tabs mit Setlist-Funktionen.
-
-Based on Repo: Ultimate Tab with heavy extensions and redesign
+> **Credits / Base Project**
+> SongHub is based on **UltimateTab** and extends it with additional functionality and UX improvements.
+> Original project: https://github.com/mikemikk/UltimateTab
 
 ## Features
 
-- Browse responsive guitar tabs and songs scraped in real time from Ultimate Guitar.
-- Save guitar tabs and songs from Ultimate Guitar or via photo upload
-- Prepare Setlists to plan which song to play for which date / gig / meeting via a calendar functionality
-- Chords visualizer with official diagrams from Ultimate Guitar.
-- Chords transposer.
-- Autoscroll tab.
-- Font size management
-- Login functionality to safeguard your own songs / tabs - edit username and password in .env.local file
+- Search and browse guitar tabs/songs (Ultimate Guitar based)
+- Save tabs locally for quick reuse
+- Upload your own song sheets via image/photo
+- Build date-based **setlists** for gigs, rehearsals, or meetings
+- Chord diagrams and chord transposition
+- Autoscroll and font-size controls for live play sessions
+- Password-protected access (credentials via environment variables)
 
-## Installation
+## Security
 
-Just run the docker container via docker-compose and visit the website on port 3005
+SongHub supports a simple login gate for private usage.
+
+Configure credentials in your environment file:
+
+- `SONGHUB_LOGIN_USERNAME`
+- `SONGHUB_LOGIN_PASSWORD`
+
+Example (`.env.local`):
+
+```env
+SONGHUB_LOGIN_USERNAME=admin
+SONGHUB_LOGIN_PASSWORD=your_strong_password
+```
+
+## Tech Stack
+
+- Next.js
+- React
+- Chakra UI
+- React Query
+- Puppeteer-based scraping utilities
+
+## Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+Then open: `http://localhost:3000`
+
+## Production (Docker)
+
+Use `docker-compose` and expose port `3005` (or your preferred port).
+
+## License
+
+Please refer to the original UltimateTab project and this repository's license files for licensing details.
