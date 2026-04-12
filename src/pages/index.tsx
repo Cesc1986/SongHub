@@ -188,7 +188,7 @@ export default function Home(): JSX.Element {
 
           <Tabs index={tabIndex} onChange={handleTabChange} variant="soft-rounded" colorScheme="blue" mb={4}>
             <TabList>
-              <Tab>🎸 Songs</Tab>
+              <Tab>{`🎸 Songs (${savedTabs.length})`}</Tab>
               <Tab>📋 Setlist</Tab>
             </TabList>
 
