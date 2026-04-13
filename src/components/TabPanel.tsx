@@ -620,7 +620,9 @@ export default function TabPanel({
               }
             } : undefined}
           >
-            {selectedTabContent && HTMLReactParser(selectedTabContent?.htmlTab)}
+            {typeof selectedTabContent?.htmlTab === 'string'
+              ? HTMLReactParser(selectedTabContent.htmlTab)
+              : null}
           </Flex>
         </Skeleton>
       </Flex>
