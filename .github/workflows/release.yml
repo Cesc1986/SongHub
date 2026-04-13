@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.6)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release notes from CHANGELOG
+        id: notes
+        run: |
+          tag='${{ steps.tag.outputs.value }}'
+          notes=$(awk -v tag="$tag" '
+            $0 ~ "^## " tag "([[:space:]]|$)" { in_section=1; next }
+            in_section && $0 ~ "^## " { in_section=0 }
+            in_section { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$notes" ]; then
+            notes="Release $tag"
+          fi
+
+          {
+            echo "value<<EOF"
+            echo "$notes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.value }}
+          name: ${{ steps.tag.outputs.value }}
+          body: ${{ steps.notes.outputs.value }}
+          draft: false
+          prerelease: false
+          make_latest: true
