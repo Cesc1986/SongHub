@@ -34,7 +34,7 @@ function writeRuntimeSettings(next: RuntimeSettings) {
 
 function envDefaultMusicianMarkingEnabled(): boolean {
   const raw = process.env.SONGHUB_FEATURE_MUSICIAN_MARKING
-  if (typeof raw === 'undefined') return true
+  if (typeof raw === 'undefined') return false
   return truthy.has(String(raw).trim().toLowerCase())
 }
 

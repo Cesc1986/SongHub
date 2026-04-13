@@ -25,12 +25,12 @@ Configure login credentials via environment variables:
 
 ```env
 # Shared app login
-SONGHUB_LOGIN_USERNAME=admin
-SONGHUB_LOGIN_PASSWORD=admin-passwort
+SONGHUB_LOGIN_USERNAME=user
+SONGHUB_LOGIN_PASSWORD=passwort
 
 # Admin login (required for /admin page)
 SONGHUB_ADMIN_USERNAME=admin
-SONGHUB_ADMIN_PASSWORD=besservorsicht!?
+SONGHUB_ADMIN_PASSWORD=admin-passwort
 ```
 
 For Docker Compose:

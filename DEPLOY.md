@@ -5,10 +5,10 @@
 Create a `.env` file in the same folder as `docker-compose.yml`:
 
 ```env
-SONGHUB_LOGIN_USERNAME=admin
-SONGHUB_LOGIN_PASSWORD=admin-passwort
+SONGHUB_LOGIN_USERNAME=user
+SONGHUB_LOGIN_PASSWORD=passwort
 SONGHUB_ADMIN_USERNAME=admin
-SONGHUB_ADMIN_PASSWORD=besservorsicht!?
+SONGHUB_ADMIN_PASSWORD=admin-passwort
 ```
 
 > You can copy `.env.example` and adjust the values.
