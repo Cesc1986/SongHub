@@ -30,3 +30,5 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 saved-tabs/
+config/runtime-settings.json
+*.swp

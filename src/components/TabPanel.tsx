@@ -104,12 +104,21 @@ export default function TabPanel({
   const [autoscrollSpeed, setAutoscrollSpeed] = useState<number>(10)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const contentContainerRef = useRef<HTMLDivElement>(null)
+  const [fullscreenInsets, setFullscreenInsets] = useState<{ left: number; right: number }>({ left: 0, right: 0 })
   const fullscreenClickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isFullscreenMode, setIsFullscreenMode] = useState<boolean>(false)
   const fullscreenBgBase = useColorModeValue('white', 'gray.900')
   const fullscreenBg = isImageContentMode ? 'black' : fullscreenBgBase
 
   const toggleFullscreen = () => {
+    if (!isFullscreenMode && !isImageContentMode && contentContainerRef.current && typeof window !== 'undefined') {
+      const rect = contentContainerRef.current.getBoundingClientRect()
+      setFullscreenInsets({
+        left: Math.max(0, Math.round(rect.left)),
+        right: Math.max(0, Math.round(window.innerWidth - rect.right)),
+      })
+    }
+
     setIsFullscreenMode((prev) => !prev)
   }
 
@@ -380,7 +389,13 @@ export default function TabPanel({
             gap={{ base: 0, md: 2 }}
           >
             {isImageTab ? (
-              <Flex direction="column" flex={1} minW={0}>
+              <Flex
+                flex={1}
+                minW={0}
+                alignItems={{ base: 'flex-start', md: 'center' }}
+                flexDirection={{ base: 'column', md: 'row' }}
+                gap={{ base: 0, md: 2 }}
+              >
                 <Editable
                   value={editName}
                   onChange={setEditName}
@@ -388,8 +403,20 @@ export default function TabPanel({
                   title="Klicken zum Bearbeiten"
                   display="flex"
                   alignItems="center"
+                  flex={1}
+                  minW={0}
                 >
-                  <EditablePreview fontSize={'xl'} fontWeight="bold" lineHeight={'1.2'} cursor="pointer" _hover={{ textDecoration: 'underline', color: 'blue.400' }} noOfLines={1} />
+                  <EditablePreview
+                    fontSize={'xl'}
+                    fontWeight="bold"
+                    lineHeight={'1.2'}
+                    cursor="pointer"
+                    _hover={{ textDecoration: 'underline', color: 'blue.400' }}
+                    noOfLines={1}
+                    whiteSpace={'nowrap'}
+                    overflow={'hidden'}
+                    textOverflow={'ellipsis'}
+                  />
                   <EditableInput fontSize={'xl'} fontWeight="bold" lineHeight={'1.2'} w="100%" />
                 </Editable>
                 <Editable
@@ -399,8 +426,16 @@ export default function TabPanel({
                   title="Klicken zum Bearbeiten"
                   display="flex"
                   alignItems="center"
+                  flexShrink={0}
                 >
-                  <EditablePreview fontSize={'sm'} color="gray.500" lineHeight={'1.2'} cursor="pointer" _hover={{ textDecoration: 'underline', color: 'blue.400' }} />
+                  <EditablePreview
+                    fontSize={'sm'}
+                    color="gray.500"
+                    lineHeight={'1.2'}
+                    cursor="pointer"
+                    _hover={{ textDecoration: 'underline', color: 'blue.400' }}
+                    whiteSpace={{ base: 'normal', md: 'nowrap' }}
+                  />
                   <EditableInput fontSize={'sm'} lineHeight={'1.2'} w="auto" minW="60px" />
                 </Editable>
               </Flex>
@@ -419,6 +454,12 @@ export default function TabPanel({
           {/* Row 2: metadata + primary actions in one compact line */}
           <Flex justifyContent={'space-between'} alignItems={'center'} py={0} flexWrap={'wrap'} gap={2}>
             <Flex flexWrap={'wrap'} gap={2} alignItems={'center'}>
+              {isImageTab && (
+                <Badge variant="subtle" colorScheme="gray" px={2} py={1}>
+                  <Text fontSize={'xs'}>Foto</Text>
+                </Badge>
+              )}
+
               {selectedTabContent?.tonality && (
                 <Badge variant="subtle" colorScheme="blue" px={2} py={1}>
                   <Flex align="center" gap={1}>
@@ -577,7 +618,22 @@ export default function TabPanel({
         wrap={'wrap'}
         justifyContent="center"
         position={isFullscreenMode ? 'fixed' : 'relative'}
-        inset={isFullscreenMode ? 0 : undefined}
+        top={isFullscreenMode ? 0 : undefined}
+        bottom={isFullscreenMode ? 0 : undefined}
+        left={
+          isFullscreenMode
+            ? isImageContentMode
+              ? 0
+              : `${fullscreenInsets.left}px`
+            : undefined
+        }
+        right={
+          isFullscreenMode
+            ? isImageContentMode
+              ? 0
+              : `${fullscreenInsets.right}px`
+            : undefined
+        }
         zIndex={isFullscreenMode ? 1400 : undefined}
         bg={isFullscreenMode ? fullscreenBg : undefined}
         overflow={isFullscreenMode ? 'auto' : 'visible'}
@@ -627,7 +683,20 @@ export default function TabPanel({
         </Skeleton>
       </Flex>
       {isFullscreenMode && (
-        <Flex position="fixed" top={3} right={3} zIndex={1600} gap={2} alignItems="center" flexWrap="wrap" justifyContent="flex-end">
+        <Flex
+          position="fixed"
+          top={3}
+          right={
+            isImageContentMode
+              ? 3
+              : `${Math.max(5, fullscreenInsets.right + 5)}px`
+          }
+          zIndex={1600}
+          gap={2}
+          alignItems="center"
+          flexWrap="wrap"
+          justifyContent="flex-end"
+        >
           {!isImageContentMode && (
             <>
               <Button

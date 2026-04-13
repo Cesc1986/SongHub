@@ -3,9 +3,12 @@ import {
   Box,
   Button,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
   Spinner,
   Stack,
+  Switch,
   Tab,
   TabList,
   TabPanel,
@@ -51,19 +54,23 @@ export default function AdminPage(): JSX.Element {
   const [accessLogs, setAccessLogs] = useState<AccessLogItem[]>([])
   const [changeLogs, setChangeLogs] = useState<ChangeLogItem[]>([])
   const [trashItems, setTrashItems] = useState<TrashItem[]>([])
+  const [musicianMarkingEnabled, setMusicianMarkingEnabled] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
 
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [a, c, t] = await Promise.all([
+      const [a, c, t, s] = await Promise.all([
         fetch('/api/admin/access-log').then((r) => r.json()),
         fetch('/api/admin/change-log').then((r) => r.json()),
         fetch('/api/admin/trash').then((r) => r.json()),
+        fetch('/api/admin/settings').then((r) => r.json()),
       ])
 
       setAccessLogs(a.logs || [])
       setChangeLogs(c.logs || [])
       setTrashItems(t.items || [])
+      setMusicianMarkingEnabled(Boolean(s?.musicianMarkingEnabled))
     } finally {
       setLoading(false)
     }
@@ -128,6 +135,40 @@ export default function AdminPage(): JSX.Element {
     }
   }
 
+  const updateMusicianMarking = async (nextValue: boolean) => {
+    const prev = musicianMarkingEnabled
+    setMusicianMarkingEnabled(nextValue)
+    setSavingSettings(true)
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ musicianMarkingEnabled: nextValue }),
+      })
+
+      if (!res.ok) {
+        setMusicianMarkingEnabled(prev)
+        toast({
+          description: 'Einstellung konnte nicht gespeichert werden',
+          status: 'error',
+          duration: 1800,
+          position: 'top-right',
+        })
+        return
+      }
+
+      toast({
+        description: `A/F Marker ${nextValue ? 'aktiviert' : 'deaktiviert'}`,
+        status: 'success',
+        duration: 1400,
+        position: 'top-right',
+      })
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   return (
     <>
       <Head>
@@ -148,11 +189,32 @@ export default function AdminPage(): JSX.Element {
         ) : (
           <Tabs variant="enclosed" colorScheme="blue">
             <TabList>
+              <Tab>Einstellungen</Tab>
               <Tab>{`Access Log (${accessLogs.length})`}</Tab>
               <Tab>{`Change Log (${changeLogs.length})`}</Tab>
               <Tab>{`Papierkorb (${trashItems.length})`}</Tab>
             </TabList>
             <TabPanels>
+              <TabPanel px={0}>
+                <Box borderWidth="1px" borderRadius="md" p={4} maxW="560px">
+                  <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                    <FormLabel htmlFor="musician-marking-toggle" mb="0">
+                      A/F Marker für Musiker anzeigen
+                    </FormLabel>
+                    <Switch
+                      id="musician-marking-toggle"
+                      colorScheme="blue"
+                      isChecked={musicianMarkingEnabled}
+                      onChange={(e) => updateMusicianMarking(e.target.checked)}
+                      isDisabled={savingSettings}
+                    />
+                  </FormControl>
+                  <Text mt={2} fontSize="xs" color="gray.500">
+                    Deaktiviert blendet die A/F Buttons auf Songseiten und in der Songliste aus.
+                  </Text>
+                </Box>
+              </TabPanel>
+
               <TabPanel px={0}>
                 <Stack spacing={2}>
                   {accessLogs.map((item, idx) => (
