@@ -229,6 +229,8 @@ export default function TabPanel({
   const borderLightColor = useColorModeValue('gray.200', 'gray.700')
   const headerRowDirection =
     (useBreakpointValue({ base: 'column', md: 'row' }) as 'column' | 'row') || 'row'
+  const inlineSongMarksInPrimaryRow =
+    (useBreakpointValue({ base: true, md: false }) as boolean) ?? true
 
   useEffect(() => {
     setChordsDiagrams(selectedTabContent?.chordsDiagrams)
@@ -536,7 +538,7 @@ export default function TabPanel({
               )}
             </Flex>
 
-            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={{ base: 0, md: 'auto' }}>
+            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={{ base: 0, md: 'auto' }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
               <Tooltip placement="left" label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
                 <IconButton
                   icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
@@ -549,10 +551,35 @@ export default function TabPanel({
               </Tooltip>
               <SetlistAddButton tab={selectedTabContent} isLoading={isLoading} />
               <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+
+              {inlineSongMarksInPrimaryRow && musicianMarkingEnabled && savedFilename && (
+                <Flex alignItems={'center'} gap={1}>
+                  <Button
+                    size="xs"
+                    variant={songMarks.A ? 'solid' : 'outline'}
+                    colorScheme={songMarks.A ? 'green' : 'gray'}
+                    onClick={() => toggleSongMark('A')}
+                    minW={'28px'}
+                    px={2}
+                  >
+                    A
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant={songMarks.F ? 'solid' : 'outline'}
+                    colorScheme={songMarks.F ? 'orange' : 'gray'}
+                    onClick={() => toggleSongMark('F')}
+                    minW={'28px'}
+                    px={2}
+                  >
+                    F
+                  </Button>
+                </Flex>
+              )}
             </Flex>
           </Flex>
 
-          {(chordsDiagrams && selectedTabContent?.type === 'Chords') || (musicianMarkingEnabled && savedFilename) ? (
+          {(chordsDiagrams && selectedTabContent?.type === 'Chords') || (!inlineSongMarksInPrimaryRow && musicianMarkingEnabled && savedFilename) ? (
             <Flex
               justifyContent={'space-between'}
               flexDirection={headerRowDirection}
@@ -570,7 +597,7 @@ export default function TabPanel({
                 <Box flex={1} />
               )}
 
-              {musicianMarkingEnabled && savedFilename && (
+              {!inlineSongMarksInPrimaryRow && musicianMarkingEnabled && savedFilename && (
                 <Flex alignItems={'center'} gap={1} justifyContent={{ base: 'flex-start', md: 'flex-end' }} flexShrink={0}>
                   <Button
                     size="xs"
