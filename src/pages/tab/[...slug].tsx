@@ -77,7 +77,17 @@ export default function TabPage(): JSX.Element {
     if (!isLoadingTab) {
       if (!isLoadingTabBackground) {
         if (typeof selectedTabContentBackground !== 'undefined') {
-          setUpdatedResponsiveTab(selectedTabContentBackground)
+          setUpdatedResponsiveTab((prev) => ({
+            ...selectedTabContentBackground,
+            savedFilename:
+              selectedTabContentBackground?.savedFilename ||
+              prev?.savedFilename ||
+              selectedTabContent?.savedFilename,
+            marks:
+              selectedTabContentBackground?.marks ||
+              prev?.marks ||
+              selectedTabContent?.marks,
+          }))
         }
       } else {
         toast.closeAll()
@@ -98,7 +108,11 @@ export default function TabPage(): JSX.Element {
   ])
 
   useEffect(() => {
-    setUpdatedResponsiveTab(selectedTabContent)
+    setUpdatedResponsiveTab((prev) => ({
+      ...selectedTabContent,
+      savedFilename: selectedTabContent?.savedFilename || prev?.savedFilename,
+      marks: selectedTabContent?.marks || prev?.marks,
+    }))
   }, [selectedTabContent])
 
   return (

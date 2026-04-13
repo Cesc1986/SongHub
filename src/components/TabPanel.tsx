@@ -30,8 +30,7 @@ import { GiCrowbar } from 'react-icons/gi'
 import Difficulty from './Difficulty'
 import ChordDiagram from './ChordDiagram'
 import { Tab, UGChordCollection } from '../types/tabs'
-import { MouseEvent, MouseEventHandler, useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/router'
+import { MouseEvent, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
 import { FaPlayCircle } from 'react-icons/fa'
 import { MdFullscreenExit } from 'react-icons/md'
 import ChordTransposer from './ChordTransposer'
@@ -59,7 +58,6 @@ export default function TabPanel({
   isLoading,
   handleClickFavorite,
 }: TabPanelProps) {
-  const router = useRouter()
   const { tabFontSize } = useAppStateContext()
   const toast = useToast()
 
@@ -101,7 +99,8 @@ export default function TabPanel({
   const [showAutoscroll, setShowAutoscroll] = useState<boolean>(false)
   const [showBackingTrack, setShowBackingTrack] = useState<boolean>(false)
   const [imageZoom, setImageZoom] = useState<number>(100)
-  const [songMark, setSongMark] = useState<'' | 'A' | 'F'>('')
+  const [songMarks, setSongMarks] = useState<{ A: boolean; F: boolean }>({ A: false, F: false })
+  const [musicianMarkingEnabled, setMusicianMarkingEnabled] = useState<boolean>(false)
   const [autoscrollSpeed, setAutoscrollSpeed] = useState<number>(10)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const contentContainerRef = useRef<HTMLDivElement>(null)
@@ -199,6 +198,8 @@ export default function TabPanel({
   const widthThirdRow = useBreakpointValue({ base: '100%', md: 'initial' })
   const marginTopThirdRow = useBreakpointValue({ base: 0, md: 2 })
   const paddingTopThirdRow = useBreakpointValue({ base: 1, md: 0 })
+  const headerRowDirection =
+    (useBreakpointValue({ base: 'column', md: 'row' }) as 'column' | 'row') || 'row'
 
   useEffect(() => {
     setChordsDiagrams(selectedTabContent?.chordsDiagrams)
@@ -279,51 +280,70 @@ export default function TabPanel({
     setIsImageContentRuntime(false)
   }, [selectedTabContent?.url])
 
-  const getSongMarkStorageKey = () =>
-    selectedTabContent?.url || selectedTab?.url || selectedTabContent?.slug || ''
+  const savedFilename = useMemo(() => {
+    if (selectedTabContent?.savedFilename) return selectedTabContent.savedFilename
+    if (!selectedTabContent?.artist || !selectedTabContent?.name) return ''
+
+    const type = selectedTabContent?.type || 'Chords'
+    return `${selectedTabContent.artist} - ${selectedTabContent.name} (${type}).ultimatetab.json`
+  }, [
+    selectedTabContent?.savedFilename,
+    selectedTabContent?.artist,
+    selectedTabContent?.name,
+    selectedTabContent?.type,
+  ])
 
   useEffect(() => {
-    const key = getSongMarkStorageKey()
-    if (!key || typeof window === 'undefined') {
-      setSongMark('')
-      return
+    let active = true
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!active) return
+        setMusicianMarkingEnabled(Boolean(data?.musicianMarkingEnabled))
+      })
+      .catch(() => {
+        if (!active) return
+        setMusicianMarkingEnabled(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const marks = selectedTabContent?.marks
+    setSongMarks({
+      A: Boolean(marks?.A),
+      F: Boolean(marks?.F),
+    })
+  }, [selectedTabContent?.marks, selectedTabContent?.savedFilename])
+
+  const toggleSongMark = async (mark: 'A' | 'F') => {
+    if (!musicianMarkingEnabled || !savedFilename) return
+
+    const nextMarks = {
+      ...songMarks,
+      [mark]: !songMarks[mark],
     }
 
-    try {
-      const raw = localStorage.getItem('songhub-song-marks')
-      if (!raw) {
-        setSongMark('')
-        return
-      }
-      const parsed = JSON.parse(raw)
-      const mark = parsed?.[key]
-      if (mark === 'A' || mark === 'F') {
-        setSongMark(mark)
-      } else {
-        setSongMark('')
-      }
-    } catch {
-      setSongMark('')
+    setSongMarks(nextMarks)
+
+    const res = await fetch('/api/song-marks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: savedFilename, marks: nextMarks }),
+    })
+
+    if (!res.ok) {
+      setSongMarks((prev) => ({ ...prev, [mark]: !nextMarks[mark] }))
+      toast({
+        description: 'Markierung konnte nicht gespeichert werden',
+        status: 'error',
+        duration: 1500,
+        position: 'top-right',
+      })
     }
-  }, [selectedTabContent?.url, selectedTab?.url, selectedTabContent?.slug])
-
-  const toggleSongMark = (mark: 'A' | 'F') => {
-    const key = getSongMarkStorageKey()
-    if (!key || typeof window === 'undefined') return
-
-    const nextMark = songMark === mark ? '' : mark
-    setSongMark(nextMark)
-
-    try {
-      const raw = localStorage.getItem('songhub-song-marks')
-      const parsed = raw ? JSON.parse(raw) : {}
-      if (nextMark) {
-        parsed[key] = nextMark
-      } else {
-        delete parsed[key]
-      }
-      localStorage.setItem('songhub-song-marks', JSON.stringify(parsed))
-    } catch {}
   }
 
   return (
@@ -394,52 +414,9 @@ export default function TabPanel({
             )}
           </Flex>
 
-          {/* Row 2: compact actions + song mark */}
+          {/* Row 2: metadata + primary actions in one compact line */}
           <Flex justifyContent={'space-between'} alignItems={'center'} py={0} flexWrap={'wrap'} gap={2}>
-            <Flex alignItems={'center'} gap={1}>
-              <Text fontSize={'xs'} color={'gray.500'}>
-                Mark:
-              </Text>
-              <Button
-                size="xs"
-                variant={songMark === 'A' ? 'solid' : 'outline'}
-                colorScheme={songMark === 'A' ? 'green' : 'gray'}
-                onClick={() => toggleSongMark('A')}
-                minW={'28px'}
-                px={2}
-              >
-                A
-              </Button>
-              <Button
-                size="xs"
-                variant={songMark === 'F' ? 'solid' : 'outline'}
-                colorScheme={songMark === 'F' ? 'orange' : 'gray'}
-                onClick={() => toggleSongMark('F')}
-                minW={'28px'}
-                px={2}
-              >
-                F
-              </Button>
-            </Flex>
-
-            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={{ base: 0, md: 'auto' }}>
-              <Tooltip placement="left" label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
-                <IconButton
-                  icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
-                  onClick={handleClickFavorite}
-                  colorScheme={isFavorite ? 'red' : 'gray'}
-                  variant="ghost"
-                  aria-label="Add to favorites"
-                  size={'sm'}
-                />
-              </Tooltip>
-              <SetlistAddButton tab={selectedTabContent} isLoading={isLoading} />
-              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
-            </Flex>
-          </Flex>
-
-          {(selectedTabContent?.tonality || selectedTabContent?.difficulty || selectedTabContent?.capo || selectedTabContent?.tuning) && (
-            <Flex flexWrap={'wrap'} gap={2} alignItems={'center'} py={0}>
+            <Flex flexWrap={'wrap'} gap={2} alignItems={'center'}>
               {selectedTabContent?.tonality && (
                 <Badge variant="subtle" colorScheme="blue" px={2} py={1}>
                   <Flex align="center" gap={1}>
@@ -476,29 +453,75 @@ export default function TabPanel({
                 </Badge>
               )}
             </Flex>
-          )}
+
+            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={{ base: 0, md: 'auto' }}>
+              <Tooltip placement="left" label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                <IconButton
+                  icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
+                  onClick={handleClickFavorite}
+                  colorScheme={isFavorite ? 'red' : 'gray'}
+                  variant="ghost"
+                  aria-label="Add to favorites"
+                  size={'sm'}
+                />
+              </Tooltip>
+              <SetlistAddButton tab={selectedTabContent} isLoading={isLoading} />
+              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+            </Flex>
+          </Flex>
+
+          {(chordsDiagrams && selectedTabContent?.type === 'Chords') || musicianMarkingEnabled ? (
+            <Flex
+              justifyContent={'space-between'}
+              flexDirection={headerRowDirection}
+              alignItems={{ base: 'stretch', md: 'center' }}
+              gap={2}
+            >
+              {chordsDiagrams && selectedTabContent?.type === 'Chords' ? (
+                <Flex pb={0} justifyContent={'start'} w={widthThirdRow} mt={0} pt={0}>
+                  <ChordTransposer
+                    chords={chordsDiagrams}
+                    setChords={setChordsDiagrams}
+                  />
+                </Flex>
+              ) : (
+                <Box />
+              )}
+
+              {musicianMarkingEnabled && savedFilename && (
+                <Flex alignItems={'center'} gap={1} justifyContent={{ base: 'flex-start', md: 'flex-end' }}>
+                  <Button
+                    size="xs"
+                    variant={songMarks.A ? 'solid' : 'outline'}
+                    colorScheme={songMarks.A ? 'green' : 'gray'}
+                    onClick={() => toggleSongMark('A')}
+                    minW={'28px'}
+                    px={2}
+                  >
+                    A
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant={songMarks.F ? 'solid' : 'outline'}
+                    colorScheme={songMarks.F ? 'orange' : 'gray'}
+                    onClick={() => toggleSongMark('F')}
+                    minW={'28px'}
+                    px={2}
+                  >
+                    F
+                  </Button>
+                </Flex>
+              )}
+            </Flex>
+          ) : null}
 
           <Flex
             justifyContent={'space-between'}
-            flexDirection={useBreakpointValue({ base: 'column', md: 'row' })}
+            flexDirection={headerRowDirection}
             alignItems={'center'}
+            gap={2}
           >
-            {chordsDiagrams && selectedTabContent?.type === 'Chords' && (
-              <Flex
-                pb={1}
-                justifyContent={'start'}
-                w={widthThirdRow}
-                mt={marginTopThirdRow}
-                pt={paddingTopThirdRow}
-              >
-                <ChordTransposer
-                  chords={chordsDiagrams}
-                  setChords={setChordsDiagrams}
-                />
-              </Flex>
-            )}
-
-            <Flex pb={1} w={widthThirdRow} pt={0} flexWrap={'wrap'}>
+            <Flex pb={0} w={widthThirdRow} pt={0} flexWrap={'wrap'}>
               {isImageTab ? (
                 <Flex fontSize={'sm'} alignItems={'center'} w={widthThirdRow} mt={marginTopThirdRow} pt={paddingTopThirdRow}>
                   <Text color={'gray.500'} as="b" mr={1}>Zoom</Text>
@@ -528,19 +551,7 @@ export default function TabPanel({
                 />
               )}
             </Flex>
-            {(isImageTab || selectedTabContent?.type != 'Chords') && (
-              <TabActionButtons
-                w={widthThirdRow}
-                showBackingTrack={showBackingTrack}
-                setShowBackingTrack={setShowBackingTrack}
-                showAutoscroll={showAutoscroll}
-                setShowAutoscroll={setShowAutoscroll}
-                isFullscreenMode={isFullscreenMode}
-                toggleFullscreen={toggleFullscreen}
-              />
-            )}
-          </Flex>
-          {!isImageTab && chordsDiagrams && selectedTabContent?.type === 'Chords' && (
+
             <TabActionButtons
               w={widthThirdRow}
               showBackingTrack={showBackingTrack}
@@ -550,7 +561,7 @@ export default function TabPanel({
               isFullscreenMode={isFullscreenMode}
               toggleFullscreen={toggleFullscreen}
             />
-          )}
+          </Flex>
         </Skeleton>
       </Box>
 
