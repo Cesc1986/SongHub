@@ -13,12 +13,10 @@ export default function TabPage(): JSX.Element {
     : router.query.slug
 
   const {
-    favorites,
     selectedTab,
     setSelectedTab,
     isLoadingTab,
     selectedTabContent,
-    handleClickFavorite,
     refetchTab,
     isLoadingTabBackground,
     selectedTabContentBackground,
@@ -96,9 +94,9 @@ export default function TabPage(): JSX.Element {
       } else {
         toast.closeAll()
         toast({
-          description: 'Adapting tab for your browser...🛠️',
+          description: 'Adapting view for your browser...🛠️',
           status: 'info',
-          position: 'top-right',
+          position: 'bottom',
           duration: 3000,
           isClosable: true,
         })
@@ -133,11 +131,6 @@ export default function TabPage(): JSX.Element {
           isLoading={isLoadingTab || selectedTab.url == '' ? true : false}
           selectedTab={selectedTab}
           selectedTabContent={updatedResponsiveTab}
-          isFavorite={
-            typeof favorites.find((el: Tab) => el.url === selectedTab.url) !==
-            'undefined'
-          }
-          handleClickFavorite={handleClickFavorite}
           refetchTab={refetchTab}
         />
       </Fade>

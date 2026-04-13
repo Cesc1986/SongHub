@@ -1,5 +1,24 @@
 # SongHub Changelog
 
+## v1.61 - 2026-04-13
+
+### 🐞 Bugfix Release Notes
+
+- Fixed action-row ordering/alignment across viewports:
+  - Mobile: `+` and `Speichern` left, A/F markers right in one line
+  - Tablet/Desktop (incl. MacBook Air): stable right-side action alignment
+- Unified A/F marker placement for text and photo tabs in the same primary action row behavior
+- Changed responsive processing hint to: `Adapting view for your browser...` and moved notification position away from top-right
+- Added `Esc` keyboard shortcut to exit fullscreen mode
+- Fixed photo-tab zoom behavior:
+  - no forced reset to 100% on fullscreen toggle
+  - zoom-in disabled when effective max zoom cannot exceed current layout constraints
+- Removed favorites heart from tab detail header
+- Fixed musician-marker toggle persistence across rebuilds by storing runtime settings in persistent `saved-tabs/admin/runtime-settings.json`
+- Added explicit `SONGHUB_SAVED_TABS_DIR=/app/saved-tabs` in Docker runtime env for consistent settings path resolution
+
+---
+
 ## v1.6 - 2026-04-13
 
 ### ✨ Release Notes (UI / Layout Focus)

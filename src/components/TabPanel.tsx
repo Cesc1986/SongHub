@@ -12,7 +12,6 @@ import {
   MenuList,
   Skeleton,
   Text,
-  Tooltip,
   useBreakpointValue,
   useColorModeValue,
   useToast,
@@ -23,14 +22,13 @@ import {
 } from '@chakra-ui/react'
 import HTMLReactParser from 'html-react-parser'
 import { GiGuitarHead } from 'react-icons/gi'
-import { RiHeartFill, RiHeartLine } from 'react-icons/ri'
 import { FaCircleArrowDown } from 'react-icons/fa6'
 import { GiMusicalScore } from 'react-icons/gi'
 import { GiCrowbar } from 'react-icons/gi'
 import Difficulty from './Difficulty'
 import ChordDiagram from './ChordDiagram'
 import { Tab, UGChordCollection } from '../types/tabs'
-import { MouseEvent, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
+import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { FaPlayCircle } from 'react-icons/fa'
 import { MdFullscreenExit } from 'react-icons/md'
 import ChordTransposer from './ChordTransposer'
@@ -44,19 +42,15 @@ import SetlistAddButton from './SetlistAddButton'
 
 interface TabPanelProps {
   selectedTab: Tab
-  isFavorite: boolean
   selectedTabContent: Tab
   isLoading: boolean
-  handleClickFavorite: MouseEventHandler<HTMLButtonElement>
   refetchTab: Function
 }
 
 export default function TabPanel({
-  isFavorite,
   selectedTab,
   selectedTabContent,
   isLoading,
-  handleClickFavorite,
 }: TabPanelProps) {
   const { tabFontSize } = useAppStateContext()
   const toast = useToast()
@@ -99,6 +93,7 @@ export default function TabPanel({
   const [showAutoscroll, setShowAutoscroll] = useState<boolean>(false)
   const [showBackingTrack, setShowBackingTrack] = useState<boolean>(false)
   const [imageZoom, setImageZoom] = useState<number>(100)
+  const [imageZoomIncreaseLocked, setImageZoomIncreaseLocked] = useState<boolean>(false)
   const [songMarks, setSongMarks] = useState<{ A: boolean; F: boolean }>({ A: false, F: false })
   const [musicianMarkingEnabled, setMusicianMarkingEnabled] = useState<boolean>(false)
   const [autoscrollSpeed, setAutoscrollSpeed] = useState<number>(10)
@@ -212,6 +207,9 @@ export default function TabPanel({
   }
 
   const changeZoom = (delta: number) => {
+    if (delta > 0 && (imageZoom >= 300 || imageZoomIncreaseLocked)) return
+    if (delta < 0 && imageZoom <= 50) return
+
     setImageZoom((z) => {
       const next = Math.min(300, Math.max(50, z + delta))
       // After state update, scroll container to horizontal center
@@ -229,7 +227,7 @@ export default function TabPanel({
   const borderLightColor = useColorModeValue('gray.200', 'gray.700')
   const headerRowDirection =
     (useBreakpointValue({ base: 'column', md: 'row' }) as 'column' | 'row') || 'row'
-  const inlineSongMarksInPrimaryRow =
+  const mobileActionsFirst =
     (useBreakpointValue({ base: true, md: false }) as boolean) ?? true
 
   useEffect(() => {
@@ -276,11 +274,45 @@ export default function TabPanel({
   }, [])
 
   useEffect(() => {
+    if (!isFullscreenMode) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsFullscreenMode(false)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isFullscreenMode])
+
+  useEffect(() => {
     if (isImageContentMode && isFullscreenMode) {
       // Image fullscreen is purely visual; disable autoscroll there.
       setShowAutoscroll(false)
-      // ensure fit-to-screen default when entering fullscreen
-      setImageZoom(100)
+    }
+
+    if (!isImageTab || isFullscreenMode) {
+      setImageZoomIncreaseLocked(false)
+    } else {
+      const root = contentContainerRef.current
+      const img = root?.querySelector('img') as HTMLImageElement | null
+      if (img && typeof window !== 'undefined') {
+        const maxWidth = window.getComputedStyle(img).maxWidth
+        const zoomLocked =
+          Boolean(maxWidth) &&
+          maxWidth !== 'none' &&
+          maxWidth !== 'max-content' &&
+          maxWidth !== 'min-content' &&
+          maxWidth !== 'fit-content'
+
+        setImageZoomIncreaseLocked(zoomLocked)
+        if (zoomLocked && imageZoom > 100) {
+          setImageZoom(100)
+        }
+      } else {
+        setImageZoomIncreaseLocked(false)
+      }
     }
 
     const root = contentContainerRef.current
@@ -321,7 +353,7 @@ export default function TabPanel({
         }
       }
     })
-  }, [isImageContentMode, isFullscreenMode])
+  }, [isImageContentMode, isFullscreenMode, isImageTab, imageZoom, selectedTabContent?.url])
 
   useEffect(() => {
     setIsImageContentRuntime(false)
@@ -492,9 +524,9 @@ export default function TabPanel({
             )}
           </Flex>
 
-          {/* Row 2: metadata + primary actions in one compact line */}
-          <Flex justifyContent={'space-between'} alignItems={'center'} py={0} flexWrap={'wrap'} gap={2}>
-            <Flex flexWrap={'wrap'} gap={2} alignItems={'center'}>
+          {/* Row 2: metadata left + primary actions right */}
+          <Flex justifyContent={'space-between'} alignItems={{ base: 'stretch', md: 'center' }} py={0} flexWrap={{ base: 'wrap', md: 'nowrap' }} gap={2}>
+            <Flex flexWrap={'wrap'} gap={2} alignItems={'center'} flex={1} minW={0}>
               {isImageTab && (
                 <Badge variant="subtle" colorScheme="gray" px={2} py={1}>
                   <Text fontSize={'xs'}>Foto</Text>
@@ -538,48 +570,85 @@ export default function TabPanel({
               )}
             </Flex>
 
-            <Flex alignItems={'center'} gap={1} flexShrink={0} ml={{ base: 0, md: 'auto' }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
-              <Tooltip placement="left" label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
-                <IconButton
-                  icon={isFavorite ? <RiHeartFill /> : <RiHeartLine />}
-                  onClick={handleClickFavorite}
-                  colorScheme={isFavorite ? 'red' : 'gray'}
-                  variant="ghost"
-                  aria-label="Add to favorites"
-                  size={'sm'}
-                />
-              </Tooltip>
-              <SetlistAddButton tab={selectedTabContent} isLoading={isLoading} />
-              <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+            <Flex
+              w={{ base: '100%', md: 'auto' }}
+              ml={{ base: 0, md: 'auto' }}
+              justifyContent={{ base: 'space-between', md: 'flex-end' }}
+              alignItems={'center'}
+              gap={2}
+              flexWrap={'nowrap'}
+              flexShrink={0}
+            >
+              {mobileActionsFirst ? (
+                <>
+                  <Flex alignItems={'center'} gap={1} flexShrink={0}>
+                    <SetlistAddButton tab={selectedTabContent} isLoading={isLoading} />
+                    <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+                  </Flex>
 
-              {inlineSongMarksInPrimaryRow && musicianMarkingEnabled && savedFilename && (
-                <Flex alignItems={'center'} gap={1}>
-                  <Button
-                    size="xs"
-                    variant={songMarks.A ? 'solid' : 'outline'}
-                    colorScheme={songMarks.A ? 'green' : 'gray'}
-                    onClick={() => toggleSongMark('A')}
-                    minW={'28px'}
-                    px={2}
-                  >
-                    A
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant={songMarks.F ? 'solid' : 'outline'}
-                    colorScheme={songMarks.F ? 'orange' : 'gray'}
-                    onClick={() => toggleSongMark('F')}
-                    minW={'28px'}
-                    px={2}
-                  >
-                    F
-                  </Button>
-                </Flex>
+                  {musicianMarkingEnabled && savedFilename && (
+                    <Flex alignItems={'center'} gap={1} justifyContent={'flex-end'} flexShrink={0}>
+                      <Button
+                        size="xs"
+                        variant={songMarks.A ? 'solid' : 'outline'}
+                        colorScheme={songMarks.A ? 'green' : 'gray'}
+                        onClick={() => toggleSongMark('A')}
+                        minW={'28px'}
+                        px={2}
+                      >
+                        A
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant={songMarks.F ? 'solid' : 'outline'}
+                        colorScheme={songMarks.F ? 'orange' : 'gray'}
+                        onClick={() => toggleSongMark('F')}
+                        minW={'28px'}
+                        px={2}
+                      >
+                        F
+                      </Button>
+                    </Flex>
+                  )}
+                </>
+              ) : (
+                <>
+                  {musicianMarkingEnabled && savedFilename && (
+                    <Flex alignItems={'center'} gap={1} justifyContent={'flex-end'} flexShrink={0}>
+                      <Button
+                        size="xs"
+                        variant={songMarks.A ? 'solid' : 'outline'}
+                        colorScheme={songMarks.A ? 'green' : 'gray'}
+                        onClick={() => toggleSongMark('A')}
+                        minW={'28px'}
+                        px={2}
+                      >
+                        A
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant={songMarks.F ? 'solid' : 'outline'}
+                        colorScheme={songMarks.F ? 'orange' : 'gray'}
+                        onClick={() => toggleSongMark('F')}
+                        minW={'28px'}
+                        px={2}
+                      >
+                        F
+                      </Button>
+                    </Flex>
+                  )}
+
+                  <Flex alignItems={'center'} gap={1} flexShrink={0}>
+                    <SetlistAddButton tab={selectedTabContent} isLoading={isLoading} />
+                    <TabSaveButton tab={selectedTabContent} isLoading={isLoading} />
+                  </Flex>
+                </>
               )}
+
             </Flex>
           </Flex>
 
-          {(chordsDiagrams && selectedTabContent?.type === 'Chords') || (!inlineSongMarksInPrimaryRow && musicianMarkingEnabled && savedFilename) ? (
+          {chordsDiagrams && selectedTabContent?.type === 'Chords' ? (
             <Flex
               justifyContent={'space-between'}
               flexDirection={headerRowDirection}
@@ -597,30 +666,6 @@ export default function TabPanel({
                 <Box flex={1} />
               )}
 
-              {!inlineSongMarksInPrimaryRow && musicianMarkingEnabled && savedFilename && (
-                <Flex alignItems={'center'} gap={1} justifyContent={{ base: 'flex-start', md: 'flex-end' }} flexShrink={0}>
-                  <Button
-                    size="xs"
-                    variant={songMarks.A ? 'solid' : 'outline'}
-                    colorScheme={songMarks.A ? 'green' : 'gray'}
-                    onClick={() => toggleSongMark('A')}
-                    minW={'28px'}
-                    px={2}
-                  >
-                    A
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant={songMarks.F ? 'solid' : 'outline'}
-                    colorScheme={songMarks.F ? 'orange' : 'gray'}
-                    onClick={() => toggleSongMark('F')}
-                    minW={'28px'}
-                    px={2}
-                  >
-                    F
-                  </Button>
-                </Flex>
-              )}
             </Flex>
           ) : null}
 
@@ -641,6 +686,7 @@ export default function TabPanel({
                   onClick={() => changeZoom(-10)}
                   aria-label="Zoom out"
                   icon={<MinusIcon />}
+                  isDisabled={imageZoom <= 50}
                 />
                 <Badge mx={2} variant="subtle" fontSize={'sm'} color={'blue.400'}>{imageZoom}%</Badge>
                 <IconButton
@@ -650,6 +696,7 @@ export default function TabPanel({
                   onClick={() => changeZoom(10)}
                   aria-label="Zoom in"
                   icon={<AddIcon />}
+                  isDisabled={imageZoom >= 300 || imageZoomIncreaseLocked}
                 />
               </Flex>
             ) : (

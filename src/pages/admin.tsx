@@ -57,6 +57,21 @@ export default function AdminPage(): JSX.Element {
   const [musicianMarkingEnabled, setMusicianMarkingEnabled] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
 
+  const formatBerlinTimestamp = (raw: string) => {
+    if (!raw) return raw
+    const parsed = new Date(raw)
+    if (Number.isNaN(parsed.getTime())) return raw
+    return new Intl.DateTimeFormat('de-DE', {
+      timeZone: 'Europe/Berlin',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(parsed)
+  }
+
   const loadAll = async () => {
     setLoading(true)
     try {
@@ -221,7 +236,7 @@ export default function AdminPage(): JSX.Element {
                     <Box key={`${item.timestamp}-${idx}`} borderWidth="1px" borderRadius="md" p={3}>
                       <Flex justify="space-between" align="center" gap={2}>
                         <Text fontSize="sm">
-                          {item.timestamp} · {item.username} · {item.ip}
+                          {formatBerlinTimestamp(item.timestamp)} · {item.username} · {item.ip}
                         </Text>
                         <Badge colorScheme={item.success ? 'green' : 'red'}>{item.event}</Badge>
                       </Flex>
@@ -237,7 +252,7 @@ export default function AdminPage(): JSX.Element {
                     <Box key={`${item.timestamp}-${idx}`} borderWidth="1px" borderRadius="md" p={3}>
                       <Flex justify="space-between" align="center" gap={2}>
                         <Text fontSize="sm">
-                          {item.timestamp} · {item.username} · {item.action}
+                          {formatBerlinTimestamp(item.timestamp)} · {item.username} · {item.action}
                         </Text>
                         <Badge colorScheme={item.role === 'admin' ? 'purple' : 'blue'}>{item.role}</Badge>
                       </Flex>
@@ -264,7 +279,7 @@ export default function AdminPage(): JSX.Element {
                       <Flex justify="space-between" align="center" gap={2}>
                         <Box>
                           <Text fontSize="sm">
-                            {item.deletedAt} · {item.type}
+                            {formatBerlinTimestamp(item.deletedAt)} · {item.type}
                           </Text>
                           <Text fontSize="xs" color="gray.500">
                             {item.originalPath || JSON.stringify(item.payload || {}).slice(0, 180)}

@@ -1,7 +1,7 @@
 # SongHub
 
 ![SongHub](https://img.shields.io/badge/SongHub-Private%20Tab%20Manager-2563eb?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-v1.6-16a34a?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.61-16a34a?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%2B%20ChakraUI-111827?style=for-the-badge)
 
 SongHub is a private song/tab workspace for musicians: search, save, organize, and prepare setlists in one place.
@@ -70,15 +70,17 @@ Then open:
 docker compose logs -f songhub
 ```
 
-## Release Notes (v1.6)
+## Release Notes (v1.61)
 
-Focus: visual fixes and layout consistency.
+Focus: bugfixes and layout consistency.
 
-- Text-song fullscreen now keeps the exact same left/right alignment as normal view (tablet + laptop)
-- Fixed fullscreen dark-mode background mismatch between content area and side margins
-- Compact, cleaner header row structure for song metadata and controls
-- Improved image-tab info layout to follow the same compact ordering as text songs where possible
-- Added admin setting to enable/disable A/F musician markers from `/admin`
+- Fixed mobile action-row layout: `+` and `Speichern` left, A/F markers right in the same row
+- Fixed desktop/tablet (incl. MacBook Air) alignment so action controls stay consistent and right-aligned
+- Updated responsive loading hint text to “Adapting view for your browser...” and moved it away from top-right
+- Added `Esc` key exit for fullscreen mode
+- Improved image-tab behavior: no forced zoom reset when toggling fullscreen; zoom-in is disabled when extra zoom is technically not possible
+- Removed favorites heart from tab detail header (feature not needed there)
+- Fixed A/F marker toggle persistence across rebuilds by storing runtime settings in persistent `saved-tabs/admin/runtime-settings.json`
 - Footer version remains derived from `package.json`
 
 ## Admin Center
