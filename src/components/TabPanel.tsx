@@ -105,10 +105,32 @@ export default function TabPanel({
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const contentContainerRef = useRef<HTMLDivElement>(null)
   const [fullscreenInsets, setFullscreenInsets] = useState<{ left: number; right: number }>({ left: 0, right: 0 })
+  const [fullscreenTextBgColor, setFullscreenTextBgColor] = useState<string>('')
   const fullscreenClickTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isFullscreenMode, setIsFullscreenMode] = useState<boolean>(false)
-  const fullscreenBgBase = useColorModeValue('white', 'gray.900')
-  const fullscreenBg = isImageContentMode ? 'black' : fullscreenBgBase
+  const fullscreenBgBase = useColorModeValue('#ffffff', '#1A202C')
+  const fullscreenTextBg = fullscreenTextBgColor || fullscreenBgBase
+  const fullscreenBg = isImageContentMode ? 'black' : fullscreenTextBg
+
+  const resolveOpaqueBackgroundColor = (startEl: HTMLElement | null): string => {
+    if (typeof window === 'undefined') return fullscreenBgBase
+
+    let node: HTMLElement | null = startEl
+    while (node) {
+      const bg = window.getComputedStyle(node).backgroundColor
+      if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+        return bg
+      }
+      node = node.parentElement
+    }
+
+    const bodyBg = window.getComputedStyle(document.body).backgroundColor
+    if (bodyBg && bodyBg !== 'rgba(0, 0, 0, 0)' && bodyBg !== 'transparent') {
+      return bodyBg
+    }
+
+    return fullscreenBgBase
+  }
 
   const toggleFullscreen = () => {
     if (!isFullscreenMode && !isImageContentMode && contentContainerRef.current && typeof window !== 'undefined') {
@@ -117,6 +139,7 @@ export default function TabPanel({
         left: Math.max(0, Math.round(rect.left)),
         right: Math.max(0, Math.round(window.innerWidth - rect.right)),
       })
+      setFullscreenTextBgColor(resolveOpaqueBackgroundColor(contentContainerRef.current))
     }
 
     setIsFullscreenMode((prev) => !prev)
@@ -223,9 +246,9 @@ export default function TabPanel({
     if (isFullscreenMode) {
       document.body.style.overflow = 'hidden'
       if (!isImageContentMode) {
-        document.body.style.backgroundColor = fullscreenBgBase
-        document.documentElement.style.backgroundColor = fullscreenBgBase
-        if (appRoot) appRoot.style.backgroundColor = fullscreenBgBase
+        document.body.style.backgroundColor = fullscreenTextBg
+        document.documentElement.style.backgroundColor = fullscreenTextBg
+        if (appRoot) appRoot.style.backgroundColor = fullscreenTextBg
       }
     } else {
       document.body.style.overflow = originalOverflow || ''
@@ -240,7 +263,7 @@ export default function TabPanel({
       document.documentElement.style.backgroundColor = originalHtmlBg || ''
       if (appRoot) appRoot.style.backgroundColor = originalAppBg || ''
     }
-  }, [isFullscreenMode, isImageContentMode, fullscreenBgBase])
+  }, [isFullscreenMode, isImageContentMode, fullscreenTextBg])
 
   useEffect(() => {
     return () => {
