@@ -195,9 +195,6 @@ export default function TabPanel({
   }
 
   const borderLightColor = useColorModeValue('gray.200', 'gray.700')
-  const widthThirdRow = useBreakpointValue({ base: '100%', md: 'initial' })
-  const marginTopThirdRow = useBreakpointValue({ base: 0, md: 2 })
-  const paddingTopThirdRow = useBreakpointValue({ base: 1, md: 0 })
   const headerRowDirection =
     (useBreakpointValue({ base: 'column', md: 'row' }) as 'column' | 'row') || 'row'
 
@@ -475,7 +472,7 @@ export default function TabPanel({
             </Flex>
           </Flex>
 
-          {(chordsDiagrams && selectedTabContent?.type === 'Chords') || musicianMarkingEnabled ? (
+          {(chordsDiagrams && selectedTabContent?.type === 'Chords') || (musicianMarkingEnabled && savedFilename) ? (
             <Flex
               justifyContent={'space-between'}
               flexDirection={headerRowDirection}
@@ -483,18 +480,18 @@ export default function TabPanel({
               gap={2}
             >
               {chordsDiagrams && selectedTabContent?.type === 'Chords' ? (
-                <Flex pb={0} justifyContent={'start'} w={widthThirdRow} mt={0} pt={0}>
+                <Flex pb={0} justifyContent={'start'} flex={1} minW={0}>
                   <ChordTransposer
                     chords={chordsDiagrams}
                     setChords={setChordsDiagrams}
                   />
                 </Flex>
               ) : (
-                <Box />
+                <Box flex={1} />
               )}
 
               {musicianMarkingEnabled && savedFilename && (
-                <Flex alignItems={'center'} gap={1} justifyContent={{ base: 'flex-start', md: 'flex-end' }}>
+                <Flex alignItems={'center'} gap={1} justifyContent={{ base: 'flex-start', md: 'flex-end' }} flexShrink={0}>
                   <Button
                     size="xs"
                     variant={songMarks.A ? 'solid' : 'outline'}
@@ -523,42 +520,41 @@ export default function TabPanel({
           <Flex
             justifyContent={'space-between'}
             flexDirection={headerRowDirection}
-            alignItems={'center'}
+            alignItems={{ base: 'stretch', md: 'center' }}
             gap={2}
+            flexWrap={'wrap'}
           >
-            <Flex pb={0} w={widthThirdRow} pt={0} flexWrap={'wrap'}>
-              {isImageTab ? (
-                <Flex fontSize={'sm'} alignItems={'center'} w={widthThirdRow} mt={marginTopThirdRow} pt={paddingTopThirdRow}>
-                  <Text color={'gray.500'} as="b" mr={1}>Zoom</Text>
-                  <IconButton
-                    variant="outline"
-                    _hover={{ bg: 'blue.400', color: 'white' }}
-                    size={'sm'} boxShadow="md" fontWeight={'normal'} px="3" py="4"
-                    onClick={() => changeZoom(-10)}
-                    aria-label="Zoom out"
-                    icon={<MinusIcon />}
-                  />
-                  <Badge mx={2} variant="subtle" fontSize={'sm'} color={'blue.400'}>{imageZoom}%</Badge>
-                  <IconButton
-                    variant="outline"
-                    _hover={{ bg: 'blue.400', color: 'white' }}
-                    size={'sm'} boxShadow="md" fontWeight={'normal'} px="3" py="4"
-                    onClick={() => changeZoom(10)}
-                    aria-label="Zoom in"
-                    icon={<AddIcon />}
-                  />
-                </Flex>
-              ) : (
-                <FontSizeManager
-                  w={widthThirdRow}
-                  mt={marginTopThirdRow}
-                  pt={paddingTopThirdRow}
+            {isImageTab ? (
+              <Flex fontSize={'sm'} alignItems={'center'} w={{ base: '100%', md: 'auto' }} pt={0} flexWrap={'wrap'}>
+                <Text color={'gray.500'} as="b" mr={1}>Zoom</Text>
+                <IconButton
+                  variant="outline"
+                  _hover={{ bg: 'blue.400', color: 'white' }}
+                  size={'sm'} boxShadow="md" fontWeight={'normal'} px="3" py="4"
+                  onClick={() => changeZoom(-10)}
+                  aria-label="Zoom out"
+                  icon={<MinusIcon />}
                 />
-              )}
-            </Flex>
+                <Badge mx={2} variant="subtle" fontSize={'sm'} color={'blue.400'}>{imageZoom}%</Badge>
+                <IconButton
+                  variant="outline"
+                  _hover={{ bg: 'blue.400', color: 'white' }}
+                  size={'sm'} boxShadow="md" fontWeight={'normal'} px="3" py="4"
+                  onClick={() => changeZoom(10)}
+                  aria-label="Zoom in"
+                  icon={<AddIcon />}
+                />
+              </Flex>
+            ) : (
+              <FontSizeManager
+                w={{ base: '100%', md: 'auto' }}
+                mt={0}
+                pt={0}
+              />
+            )}
 
             <TabActionButtons
-              w={widthThirdRow}
+              w={{ base: '100%', md: 'auto' }}
               showBackingTrack={showBackingTrack}
               setShowBackingTrack={setShowBackingTrack}
               showAutoscroll={showAutoscroll}

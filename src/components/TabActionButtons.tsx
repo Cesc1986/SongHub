@@ -1,4 +1,4 @@
-import { Button, Flex, Icon, useBreakpointValue } from '@chakra-ui/react'
+import { Button, Flex, Icon } from '@chakra-ui/react'
 import { Dispatch, SetStateAction } from 'react'
 import { FaCircleArrowDown } from 'react-icons/fa6'
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md'
@@ -21,7 +21,7 @@ export default function TabActionButtons({
   toggleFullscreen,
 }: TabActionButtonsProps): JSX.Element {
   return (
-    <Flex pb={1} w={w} pt={0} flexWrap={'wrap'} gap={2}>
+    <Flex pb={0} w={w} pt={0} flexWrap={'wrap'} gap={2} alignItems={'center'}>
       <Button
         variant="outline"
         _hover={{
@@ -42,7 +42,6 @@ export default function TabActionButtons({
         fontWeight={'normal'}
         px="3"
         py="4"
-        mt={useBreakpointValue({ base: 3, md: 2 })}
         leftIcon={<Icon as={FaCircleArrowDown} />}
       >
         Autoscroll
@@ -59,7 +58,6 @@ export default function TabActionButtons({
         fontWeight={'normal'}
         px="3"
         py="4"
-        mt={useBreakpointValue({ base: 3, md: 2 })}
         leftIcon={<Icon as={isFullscreenMode ? MdFullscreenExit : MdFullscreen} />}
       >
         {isFullscreenMode ? 'Exit Fullscreen' : 'Fullscreen'}
