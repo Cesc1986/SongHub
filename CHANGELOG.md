@@ -1,4 +1,27 @@
-# UltimateTab Changelog
+# SongHub Changelog
+
+## v1.6 - 2026-04-13
+
+### ✨ Release Notes (UI / Layout Focus)
+
+- **Fullscreen spacing parity for text songs**
+  - In fullscreen mode (non-photo tabs), content now starts at the exact same left position as in normal view.
+  - Insets are measured from the current layout and reused in fullscreen.
+
+- **Fullscreen background color consistency (dark mode + light mode)**
+  - Fixed color mismatch between side margins and text background in fullscreen.
+  - Root cause was an invalid inline token color in dark mode; now resolved with valid CSS color handling.
+
+- **Header compaction and responsive cleanup**
+  - Song info + controls were reorganized to reduce wasted space and improve readability across mobile/tablet/laptop.
+
+- **Image-tab info layout improvements**
+  - Photo-upload song info (artist/title) now follows the compact arrangement pattern used in text songs where possible.
+
+- **Admin setting for A/F markers**
+  - Added admin toggle in `/admin` to enable/disable musician A/F markers globally.
+
+---
 
 ## v1.2 - 2026-04-12
 

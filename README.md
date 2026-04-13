@@ -1,7 +1,7 @@
 # SongHub
 
 ![SongHub](https://img.shields.io/badge/SongHub-Private%20Tab%20Manager-2563eb?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-v1.5-16a34a?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.6-16a34a?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%2B%20ChakraUI-111827?style=for-the-badge)
 
 SongHub is a private song/tab workspace for musicians: search, save, organize, and prepare setlists in one place.
@@ -70,11 +70,15 @@ Then open:
 docker compose logs -f songhub
 ```
 
-## Release Notes (v1.5)
+## Release Notes (v1.6)
 
-- Responsive layout updates with clearer breakpoints for iPhone, iPad, and laptop screens
-- Visual polish for fullscreen photo and text/tab viewing
-- Added admin functionality including logging and trash workflow
+Focus: visual fixes and layout consistency.
+
+- Text-song fullscreen now keeps the exact same left/right alignment as normal view (tablet + laptop)
+- Fixed fullscreen dark-mode background mismatch between content area and side margins
+- Compact, cleaner header row structure for song metadata and controls
+- Improved image-tab info layout to follow the same compact ordering as text songs where possible
+- Added admin setting to enable/disable A/F musician markers from `/admin`
 - Footer version remains derived from `package.json`
 
 ## Admin Center
