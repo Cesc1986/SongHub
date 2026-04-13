@@ -282,12 +282,17 @@ export default function TabPanel({
 
   const savedFilename = useMemo(() => {
     if (selectedTabContent?.savedFilename) return selectedTabContent.savedFilename
+
+    const isSavedTab = Boolean(selectedTabContent?.savedAt || selectedTab?.savedAt)
+    if (!isSavedTab) return ''
     if (!selectedTabContent?.artist || !selectedTabContent?.name) return ''
 
     const type = selectedTabContent?.type || 'Chords'
     return `${selectedTabContent.artist} - ${selectedTabContent.name} (${type}).ultimatetab.json`
   }, [
     selectedTabContent?.savedFilename,
+    selectedTabContent?.savedAt,
+    selectedTab?.savedAt,
     selectedTabContent?.artist,
     selectedTabContent?.name,
     selectedTabContent?.type,

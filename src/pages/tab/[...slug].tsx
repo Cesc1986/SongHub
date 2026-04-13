@@ -79,6 +79,10 @@ export default function TabPage(): JSX.Element {
         if (typeof selectedTabContentBackground !== 'undefined') {
           setUpdatedResponsiveTab((prev) => ({
             ...selectedTabContentBackground,
+            savedAt:
+              selectedTabContentBackground?.savedAt ||
+              prev?.savedAt ||
+              selectedTabContent?.savedAt,
             savedFilename:
               selectedTabContentBackground?.savedFilename ||
               prev?.savedFilename ||
@@ -110,6 +114,7 @@ export default function TabPage(): JSX.Element {
   useEffect(() => {
     setUpdatedResponsiveTab((prev) => ({
       ...selectedTabContent,
+      savedAt: selectedTabContent?.savedAt || prev?.savedAt,
       savedFilename: selectedTabContent?.savedFilename || prev?.savedFilename,
       marks: selectedTabContent?.marks || prev?.marks,
     }))
