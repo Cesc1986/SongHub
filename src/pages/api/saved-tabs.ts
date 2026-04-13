@@ -27,7 +27,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       .trim() + '.ultimatetab.json'
 
     const filepath = path.join(SAVED_DIR, filename)
-    fs.writeFileSync(filepath, JSON.stringify({ savedAt: new Date().toISOString(), version: '1.0', tab }, null, 2))
+    fs.writeFileSync(
+      filepath,
+      JSON.stringify(
+        {
+          savedAt: new Date().toISOString(),
+          version: '1.0',
+          marks: { A: false, F: false },
+          tab,
+        },
+        null,
+        2,
+      ),
+    )
 
     appendChangeLog({
       timestamp: new Date().toISOString(),
@@ -60,6 +72,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           type: parsed.tab?.type,
           slug: parsed.tab?.slug,
           url: parsed.tab?.url,
+          marks: {
+            A: Boolean(parsed?.marks?.A),
+            F: Boolean(parsed?.marks?.F),
+          },
         }
       } catch {
         return { filename, error: true }

@@ -38,6 +38,10 @@ interface SavedTabMeta {
   type: string
   slug: string
   url: string
+  marks?: {
+    A?: boolean
+    F?: boolean
+  }
   error?: boolean
 }
 
@@ -50,6 +54,7 @@ export default function Home(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [tabIndex, setTabIndex] = useState(0)
+  const [musicianMarkingEnabled, setMusicianMarkingEnabled] = useState(false)
   
   // Restore tab from sessionStorage on mount
   useEffect(() => {
@@ -79,6 +84,13 @@ export default function Home(): JSX.Element {
   }
 
   useEffect(() => { fetchSavedTabs() }, [])
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => setMusicianMarkingEnabled(Boolean(data?.musicianMarkingEnabled)))
+      .catch(() => setMusicianMarkingEnabled(false))
+  }, [])
 
   // Listen for tab-saved events (from ImageTabUploader)
   useEffect(() => {
@@ -245,9 +257,17 @@ export default function Home(): JSX.Element {
                           onClick={() => handleOpen(tab)}
                         >
                           <Box flex={1}>
-                            <Text fontSize="lg" fontWeight="bold" noOfLines={1}>
-                              {tab.name}
-                            </Text>
+                            <Flex align="center" gap={2}>
+                              <Text fontSize="lg" fontWeight="bold" noOfLines={1}>
+                                {tab.name}
+                              </Text>
+                              {musicianMarkingEnabled && tab.marks?.A && (
+                                <Badge colorScheme="green" variant="subtle">A</Badge>
+                              )}
+                              {musicianMarkingEnabled && tab.marks?.F && (
+                                <Badge colorScheme="orange" variant="subtle">F</Badge>
+                              )}
+                            </Flex>
                             <Flex align="center" justify="space-between" mt={1}>
                               <Text fontSize="sm" color="gray.500">{tab.artist}</Text>
                               <Flex gap={1} onClick={(e) => e.stopPropagation()}>

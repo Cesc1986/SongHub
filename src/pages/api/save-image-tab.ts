@@ -65,7 +65,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const filepath = path.join(SAVED_DIR, filename)
   fs.writeFileSync(
     filepath,
-    JSON.stringify({ savedAt: new Date().toISOString(), version: '1.0', tab }, null, 2),
+    JSON.stringify(
+      {
+        savedAt: new Date().toISOString(),
+        version: '1.0',
+        marks: { A: false, F: false },
+        tab,
+      },
+      null,
+      2,
+    ),
   )
 
   appendChangeLog({

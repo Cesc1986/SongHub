@@ -51,6 +51,11 @@ export interface Tab {
   versions?: Tab[]
   chordsDiagrams?: UGChordCollection[]
   savedAt?: string
+  savedFilename?: string
+  marks?: {
+    A?: boolean
+    F?: boolean
+  }
 }
 
 export interface TabScrapped {

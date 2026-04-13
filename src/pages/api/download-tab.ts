@@ -20,9 +20,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const content = fs.readFileSync(filepath, 'utf-8')
   const parsed = JSON.parse(content)
   
-  // Copy savedAt into tab object so it's available in the UI
-  if (parsed.savedAt && parsed.tab) {
-    parsed.tab.savedAt = parsed.savedAt
+  // Copy metadata into tab object so it's available in the UI
+  if (parsed.tab) {
+    if (parsed.savedAt) parsed.tab.savedAt = parsed.savedAt
+    parsed.tab.savedFilename = path.basename(filename)
+    parsed.tab.marks = {
+      A: Boolean(parsed?.marks?.A),
+      F: Boolean(parsed?.marks?.F),
+    }
   }
   
   res.setHeader('Content-Type', 'application/json')
