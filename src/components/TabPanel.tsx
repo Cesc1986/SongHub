@@ -215,16 +215,32 @@ export default function TabPanel({
     if (typeof document === 'undefined') return
 
     const originalOverflow = document.body.style.overflow
+    const originalBodyBg = document.body.style.backgroundColor
+    const originalHtmlBg = document.documentElement.style.backgroundColor
+    const appRoot = document.getElementById('__next')
+    const originalAppBg = appRoot?.style.backgroundColor || ''
+
     if (isFullscreenMode) {
       document.body.style.overflow = 'hidden'
+      if (!isImageContentMode) {
+        document.body.style.backgroundColor = fullscreenBgBase
+        document.documentElement.style.backgroundColor = fullscreenBgBase
+        if (appRoot) appRoot.style.backgroundColor = fullscreenBgBase
+      }
     } else {
       document.body.style.overflow = originalOverflow || ''
+      document.body.style.backgroundColor = originalBodyBg || ''
+      document.documentElement.style.backgroundColor = originalHtmlBg || ''
+      if (appRoot) appRoot.style.backgroundColor = originalAppBg || ''
     }
 
     return () => {
       document.body.style.overflow = originalOverflow || ''
+      document.body.style.backgroundColor = originalBodyBg || ''
+      document.documentElement.style.backgroundColor = originalHtmlBg || ''
+      if (appRoot) appRoot.style.backgroundColor = originalAppBg || ''
     }
-  }, [isFullscreenMode])
+  }, [isFullscreenMode, isImageContentMode, fullscreenBgBase])
 
   useEffect(() => {
     return () => {
