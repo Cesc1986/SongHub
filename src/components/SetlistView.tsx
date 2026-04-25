@@ -452,18 +452,10 @@ export default function SetlistView({ onOpenTab }: Props): JSX.Element {
                 opacity={isDragged ? 0.7 : 1}
                 transition="all 0.15s"
                 transform={isDragOver ? 'scale(1.02)' : undefined}
-                // Desktop drag
-                draggable
-                onDragStart={(e) => handleDragStart(e, index)}
+                // Nur Drop-Ziele auf der Zeile erlauben.
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
-                onDragEnd={handleDragEnd}
-                // Touch drag
-                onTouchStart={(e) => handleTouchStart(e, index)}
-                onTouchMove={(e) => handleTouchMove(e)}
-                onTouchEnd={handleTouchEnd}
-                style={{ touchAction: 'none' }}
               >
                 <Box
                   mr={2}
@@ -471,6 +463,13 @@ export default function SetlistView({ onOpenTab }: Props): JSX.Element {
                   p={2}
                   _active={{ cursor: 'grabbing', bg: 'gray.200' }}
                   borderRadius="md"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onTouchStart={(e) => handleTouchStart(e, index)}
+                  onTouchMove={(e) => handleTouchMove(e)}
+                  onTouchEnd={handleTouchEnd}
+                  style={{ touchAction: 'none' }}
                 >
                   <DragHandleIcon color="gray.400" boxSize={5} />
                 </Box>

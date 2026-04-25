@@ -3,7 +3,7 @@ import { GoogleAnalytics } from 'nextjs-google-analytics'
 import { ChakraProvider } from '@chakra-ui/react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import { AppStateProvider } from '../contexts/AppContext'
 import { extendedTheme } from '../theme'
@@ -26,6 +26,38 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
   )
 
   const isLoginPage = router.pathname === '/login'
+  const lastTrackedPathRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const trackPageView = (url: string) => {
+      if (lastTrackedPathRef.current === url) return
+      lastTrackedPathRef.current = url
+
+      fetch('/api/access-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: url,
+          method: 'GET',
+          query: typeof window !== 'undefined' ? window.location.search : '',
+          referrer: typeof document !== 'undefined' ? document.referrer : '',
+        }),
+      }).catch(() => {
+        // Access-Logging ist best-effort und darf UI nicht stören
+      })
+    }
+
+    // Initiale Seite einmalig loggen
+    trackPageView(router.asPath)
+
+    // Danach nur echte Navigationen loggen
+    const handleRouteChangeComplete = (url: string) => trackPageView(url)
+    router.events.on('routeChangeComplete', handleRouteChangeComplete)
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChangeComplete)
+    }
+  }, [router.asPath, router.events])
 
   return (
     <QueryClientProvider client={queryClient}>

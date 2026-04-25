@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import fs from 'fs'
 import path from 'path'
 import { getAuthFromRequest } from '../../lib/auth'
-import { appendChangeLog, getClientIp } from '../../lib/audit'
+import { getClientIp } from '../../lib/audit'
 
 const SAVED_DIR = path.join(process.cwd(), 'saved-tabs')
 
@@ -39,19 +39,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     fs.unlinkSync(filepath)
   }
 
-  appendChangeLog({
-    timestamp: new Date().toISOString(),
-    username: actor,
-    role,
-    ip,
-    action: 'song_renamed',
-    details: {
-      oldFilename: path.basename(filename),
-      newFilename,
-      artist,
-      name,
-    },
-  })
+  // Rename bewusst nicht im Change-Log erfassen,
+  // damit der Log auf echte Song-Adds/Deletes fokussiert bleibt.
 
   return res.status(200).json({ success: true, filename: newFilename })
 }

@@ -8,7 +8,8 @@ export interface AccessLogEntry {
   role: 'user' | 'admin'
   ip: string
   success: boolean
-  event: 'login_success' | 'login_failed'
+  event: 'login_success' | 'login_failed' | 'page_view'
+  details?: Record<string, any>
 }
 
 export interface ChangeLogEntry {
@@ -16,12 +17,7 @@ export interface ChangeLogEntry {
   username: string
   role: 'user' | 'admin'
   ip: string
-  action:
-    | 'song_created'
-    | 'song_deleted'
-    | 'song_renamed'
-    | 'song_saved'
-    | 'song_saved_image'
+  action: 'song_created' | 'song_deleted' | 'song_renamed'
   details?: Record<string, any>
 }
 

@@ -1,3 +1,4 @@
+import { useRouter } from 'next/router'
 import {
   Badge,
   Box,
@@ -27,6 +28,12 @@ interface AccessLogItem {
   ip: string
   success: boolean
   event: string
+  details?: {
+    path?: string
+    method?: string
+    query?: string
+    referrer?: string
+  }
 }
 
 interface ChangeLogItem {
@@ -49,6 +56,7 @@ interface TrashItem {
 }
 
 export default function AdminPage(): JSX.Element {
+  const router = useRouter()
   const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [accessLogs, setAccessLogs] = useState<AccessLogItem[]>([])
@@ -56,6 +64,17 @@ export default function AdminPage(): JSX.Element {
   const [trashItems, setTrashItems] = useState<TrashItem[]>([])
   const [musicianMarkingEnabled, setMusicianMarkingEnabled] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
+  
+  // Parse initial tab index from hash (e.g. #tab-2)
+  const initialTabIndex = typeof window !== 'undefined' 
+    ? parseInt(window.location.hash.replace('#tab-', ''), 10) || 0 
+    : 0
+  const [tabIndex, setTabIndex] = useState(initialTabIndex)
+
+  const handleTabChange = (index: number) => {
+    setTabIndex(index)
+    window.location.hash = `tab-${index}`
+  }
 
   const formatBerlinTimestamp = (raw: string) => {
     if (!raw) return raw
@@ -202,12 +221,12 @@ export default function AdminPage(): JSX.Element {
             <Spinner />
           </Flex>
         ) : (
-          <Tabs variant="enclosed" colorScheme="blue">
-            <TabList>
-              <Tab>Einstellungen</Tab>
-              <Tab>{`Access Log (${accessLogs.length})`}</Tab>
-              <Tab>{`Change Log (${changeLogs.length})`}</Tab>
-              <Tab>{`Papierkorb (${trashItems.length})`}</Tab>
+          <Tabs variant="enclosed" colorScheme="blue" isLazy index={tabIndex} onChange={handleTabChange}>
+            <TabList overflowX="auto" overflowY="hidden" whiteSpace="nowrap">
+              <Tab flexShrink={0}>Einstellungen</Tab>
+              <Tab flexShrink={0}>{`Access Log (${accessLogs.length})`}</Tab>
+              <Tab flexShrink={0}>{`Change Log (${changeLogs.length})`}</Tab>
+              <Tab flexShrink={0}>{`Papierkorb (${trashItems.length})`}</Tab>
             </TabList>
             <TabPanels>
               <TabPanel px={0}>
@@ -232,37 +251,46 @@ export default function AdminPage(): JSX.Element {
 
               <TabPanel px={0}>
                 <Stack spacing={2}>
-                  {accessLogs.map((item, idx) => (
-                    <Box key={`${item.timestamp}-${idx}`} borderWidth="1px" borderRadius="md" p={3}>
-                      <Flex justify="space-between" align="center" gap={2}>
-                        <Text fontSize="sm">
-                          {formatBerlinTimestamp(item.timestamp)} · {item.username} · {item.ip}
-                        </Text>
-                        <Badge colorScheme={item.success ? 'green' : 'red'}>{item.event}</Badge>
-                      </Flex>
-                    </Box>
-                  ))}
+                    {accessLogs.map((item, idx) => (
+                      <Box key={`${item.timestamp}-${idx}`} borderWidth="1px" borderRadius="md" p={3}>
+                        <Flex justify="space-between" align="flex-start" direction={{ base: 'column', sm: 'row' }} gap={2}>
+                          <Text fontSize="sm" wordBreak="break-word">
+                            {formatBerlinTimestamp(item.timestamp)} · {item.username} · {item.ip}
+                          </Text>
+                          <Badge colorScheme={item.success ? 'green' : 'red'} alignSelf={{ base: 'flex-start', sm: 'center' }}>
+                            {item.event}
+                          </Badge>
+                        </Flex>
+                        {item.event === 'page_view' && item.details?.path && (
+                          <Text fontSize="xs" color="gray.500" mt={1} wordBreak="break-word">
+                            {item.details.method || 'GET'} {item.details.path}
+                          </Text>
+                        )}
+                      </Box>
+                    ))}
                   {accessLogs.length === 0 && <Text color="gray.500">Noch keine Einträge.</Text>}
                 </Stack>
               </TabPanel>
 
               <TabPanel px={0}>
                 <Stack spacing={2}>
-                  {changeLogs.map((item, idx) => (
-                    <Box key={`${item.timestamp}-${idx}`} borderWidth="1px" borderRadius="md" p={3}>
-                      <Flex justify="space-between" align="center" gap={2}>
-                        <Text fontSize="sm">
-                          {formatBerlinTimestamp(item.timestamp)} · {item.username} · {item.action}
-                        </Text>
-                        <Badge colorScheme={item.role === 'admin' ? 'purple' : 'blue'}>{item.role}</Badge>
-                      </Flex>
-                      {item.details && (
-                        <Text fontSize="xs" color="gray.500" mt={1}>
-                          {JSON.stringify(item.details)}
-                        </Text>
-                      )}
-                    </Box>
-                  ))}
+                    {changeLogs.map((item, idx) => (
+                      <Box key={`${item.timestamp}-${idx}`} borderWidth="1px" borderRadius="md" p={3}>
+                        <Flex justify="space-between" align="flex-start" direction={{ base: 'column', sm: 'row' }} gap={2}>
+                          <Text fontSize="sm" wordBreak="break-word">
+                            {formatBerlinTimestamp(item.timestamp)} · {item.username} · {item.action}
+                          </Text>
+                          <Badge colorScheme={item.role === 'admin' ? 'purple' : 'blue'} alignSelf={{ base: 'flex-start', sm: 'center' }}>
+                            {item.role}
+                          </Badge>
+                        </Flex>
+                        {item.details && (
+                          <Text fontSize="xs" color="gray.500" mt={1} wordBreak="break-word" whiteSpace="pre-wrap">
+                            {JSON.stringify(item.details)}
+                          </Text>
+                        )}
+                      </Box>
+                    ))}
                   {changeLogs.length === 0 && <Text color="gray.500">Noch keine Einträge.</Text>}
                 </Stack>
               </TabPanel>
@@ -274,38 +302,38 @@ export default function AdminPage(): JSX.Element {
                   </Button>
                 </Flex>
                 <Stack spacing={2}>
-                  {trashItems.map((item) => (
-                    <Box key={item.id} borderWidth="1px" borderRadius="md" p={3}>
-                      <Flex justify="space-between" align="center" gap={2}>
-                        <Box>
-                          <Text fontSize="sm">
-                            {formatBerlinTimestamp(item.deletedAt)} · {item.type}
-                          </Text>
-                          <Text fontSize="xs" color="gray.500">
-                            {item.originalPath || JSON.stringify(item.payload || {}).slice(0, 180)}
-                          </Text>
-                        </Box>
-                        <Flex gap={2}>
-                          <Button
-                            size="xs"
-                            colorScheme="green"
-                            variant="ghost"
-                            onClick={() => restoreTrashItem(item.id)}
-                          >
-                            Wiederherstellen
-                          </Button>
-                          <Button
-                            size="xs"
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={() => purgeTrashItem(item.id)}
-                          >
-                            Endgültig löschen
-                          </Button>
+                    {trashItems.map((item) => (
+                      <Box key={item.id} borderWidth="1px" borderRadius="md" p={3}>
+                        <Flex justify="space-between" align="flex-start" direction={{ base: 'column', sm: 'row' }} gap={2}>
+                          <Box flex={1} minW={0}>
+                            <Text fontSize="sm" wordBreak="break-word">
+                              {formatBerlinTimestamp(item.deletedAt)} · {item.type}
+                            </Text>
+                            <Text fontSize="xs" color="gray.500" noOfLines={3} wordBreak="break-all">
+                              {item.originalPath || JSON.stringify(item.payload || {}).slice(0, 180)}
+                            </Text>
+                          </Box>
+                          <Flex gap={2} mt={{ base: 2, sm: 0 }} alignSelf={{ base: 'flex-start', sm: 'center' }}>
+                            <Button
+                              size="xs"
+                              colorScheme="green"
+                              variant="ghost"
+                              onClick={() => restoreTrashItem(item.id)}
+                            >
+                              Wiederherstellen
+                            </Button>
+                            <Button
+                              size="xs"
+                              colorScheme="red"
+                              variant="ghost"
+                              onClick={() => purgeTrashItem(item.id)}
+                            >
+                              Löschen
+                            </Button>
+                          </Flex>
                         </Flex>
-                      </Flex>
-                    </Box>
-                  ))}
+                      </Box>
+                    ))}
                   {trashItems.length === 0 && <Text color="gray.500">Papierkorb ist leer.</Text>}
                 </Stack>
               </TabPanel>

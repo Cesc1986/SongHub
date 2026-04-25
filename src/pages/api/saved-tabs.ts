@@ -27,6 +27,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       .trim() + '.ultimatetab.json'
 
     const filepath = path.join(SAVED_DIR, filename)
+    const existedBefore = fs.existsSync(filepath)
+
     fs.writeFileSync(
       filepath,
       JSON.stringify(
@@ -41,19 +43,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       ),
     )
 
-    appendChangeLog({
-      timestamp: new Date().toISOString(),
-      username: actor,
-      role,
-      ip,
-      action: 'song_saved',
-      details: {
-        filename,
-        artist: tab.artist,
-        name: tab.name,
-        type: tab.type,
-      },
-    })
+    // Nur echte Neuanlagen im Change-Log erfassen.
+    if (!existedBefore) {
+      appendChangeLog({
+        timestamp: new Date().toISOString(),
+        username: actor,
+        role,
+        ip,
+        action: 'song_created',
+        details: {
+          filename,
+          artist: tab.artist,
+          name: tab.name,
+          type: tab.type,
+          source: 'ultimate-guitar',
+        },
+      })
+    }
 
     return res.status(200).json({ success: true, filename })
 
