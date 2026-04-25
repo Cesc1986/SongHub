@@ -1,5 +1,17 @@
 # SongHub Changelog
 
+## v1.7 - 2026-04-25
+
+### ✨ Release Notes (Admin + UI)
+
+- Access logging switched from detailed page-view logging to session-oriented `session_start` events (with cooldown), so the admin panel shows real usage sessions instead of every click.
+- Change log behavior refined to focus on real song lifecycle changes (create/delete); noisy save/rename events were reduced/removed for better operational clarity.
+- Setlist reorder UX on mobile and touch devices improved: moving songs now requires the explicit drag handle, preventing accidental reordering during vertical swipe scrolling.
+- Admin log display improved for compact/mobile readability.
+- Production verification flow hardened: release completion now includes service-active + HTTP checks for `/login` and `/api/health`.
+
+---
+
 ## v1.61 - 2026-04-13
 
 ### 🐞 Bugfix Release Notes
