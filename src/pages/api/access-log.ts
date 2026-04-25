@@ -3,6 +3,9 @@ import { getAuthFromRequest } from '../../lib/auth'
 import { appendAccessLog, getClientIp } from '../../lib/audit'
 
 const TRACKED_METHODS = new Set(['GET'])
+const SESSION_MIN_INTERVAL_MS = 30 * 60 * 1000
+
+const recentSessionStarts = new Map<string, number>()
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -35,13 +38,31 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ success: true, skipped: true })
   }
 
+  const ip = getClientIp(req)
+  const key = `${auth.username || 'unknown'}|${ip}`
+  const now = Date.now()
+  const lastSeen = recentSessionStarts.get(key) || 0
+
+  if (now - lastSeen < SESSION_MIN_INTERVAL_MS) {
+    return res.status(200).json({ success: true, skipped: true, reason: 'recent-session' })
+  }
+
+  recentSessionStarts.set(key, now)
+
+  // Primitive GC, um Map klein zu halten
+  for (const [k, ts] of recentSessionStarts.entries()) {
+    if (now - ts > SESSION_MIN_INTERVAL_MS * 2) {
+      recentSessionStarts.delete(k)
+    }
+  }
+
   appendAccessLog({
     timestamp: new Date().toISOString(),
     username: auth.username || 'unknown',
     role: auth.role,
-    ip: getClientIp(req),
+    ip,
     success: true,
-    event: 'page_view',
+    event: 'session_start',
     details: {
       path,
       method,

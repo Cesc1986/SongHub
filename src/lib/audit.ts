@@ -8,7 +8,7 @@ export interface AccessLogEntry {
   role: 'user' | 'admin'
   ip: string
   success: boolean
-  event: 'login_success' | 'login_failed' | 'page_view'
+  event: 'login_success' | 'login_failed' | 'session_start'
   details?: Record<string, any>
 }
 

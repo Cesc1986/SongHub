@@ -261,9 +261,9 @@ export default function AdminPage(): JSX.Element {
                             {item.event}
                           </Badge>
                         </Flex>
-                        {item.event === 'page_view' && item.details?.path && (
+                        {item.event === 'session_start' && item.details?.path && (
                           <Text fontSize="xs" color="gray.500" mt={1} wordBreak="break-word">
-                            {item.details.method || 'GET'} {item.details.path}
+                            Start: {item.details.method || 'GET'} {item.details.path}
                           </Text>
                         )}
                       </Box>
