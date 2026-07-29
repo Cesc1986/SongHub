@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+saved_tabs_dir="${SONGHUB_SAVED_TABS_DIR:-/app/saved-tabs}"
+mkdir -p "$saved_tabs_dir"
+
 echo "[start.sh] Cleaning up stale Xvfb lock files..."
 rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
 
@@ -46,4 +49,4 @@ fi
 
 echo "[start.sh] Health endpoint: http://localhost:3005/api/health"
 echo "[start.sh] Starting Next.js on port 3005..."
-exec npx next start -p 3005
+exec ./node_modules/.bin/next start -p 3005

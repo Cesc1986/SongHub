@@ -1,0 +1,6 @@
+__SSH_INCLUDE_1PASSWORD__
+
+Host *
+  IdentityAgent __SSH_AUTH_SOCK__
+  PreferredAuthentications publickey
+  IdentitiesOnly yes

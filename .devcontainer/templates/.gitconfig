@@ -1,0 +1,4 @@
+[include]
+	path = /tmp/host.gitconfig
+[gpg "ssh"]
+	program = __SSH_KEYGEN__

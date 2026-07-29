@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "devcontainer-automated-template",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu@sha256:7ee7da33a68d997971660d91ecc8372e55a38a777c3c6bd6808daf91928052db",
+  "mounts": [
+    "source=${localEnv:DEVCONTAINER_AUTOMATED_GITCONFIG},target=/tmp/host.gitconfig,type=bind,readonly",
+    "source=${localEnv:DEVCONTAINER_AUTOMATED_SSH_AGENT_SOCKET},target=/tmp/ssh-agent.sock,type=bind",
+    "source=${localEnv:DEVCONTAINER_AUTOMATED_SSH_DIR},target=/tmp/host-ssh,type=bind,readonly"
+  ],
+  "containerEnv": {
+    "SSH_AUTH_SOCK": "/tmp/ssh-agent.sock"
+  },
+  "onCreateCommand": "bash ${containerWorkspaceFolder}/.devcontainer/onCreateCommand.sh ${containerWorkspaceFolder}",
+  "userEnvProbe": "loginInteractiveShell",
+  "updateRemoteUserUID": false
+}
