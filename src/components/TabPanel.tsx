@@ -55,7 +55,7 @@ export default function TabPanel({
   const { tabFontSize } = useAppStateContext()
   const toast = useToast()
 
-  const isImageTab = selectedTab?.url?.startsWith('local://') || selectedTabContent?.url?.startsWith('local://')
+  const isImageTab = selectedTab?.url?.startsWith('local://image-tab/') || selectedTabContent?.url?.startsWith('local://image-tab/')
   const isLikelyImageContent =
     isImageTab || Boolean(selectedTabContent?.htmlTab?.includes('<img'))
   const [isImageContentRuntime, setIsImageContentRuntime] = useState<boolean>(false)

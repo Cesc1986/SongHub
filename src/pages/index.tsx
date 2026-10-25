@@ -106,7 +106,7 @@ export default function Home(): JSX.Element {
     if (!fullTab) return
 
     if (fullTab.url?.startsWith('local://')) {
-      const slug = fullTab.url.replace('local://image-tab/', '')
+      const slug = fullTab.url.replace(/^local:\/\/[^/]+\//, '')
       fullTab.slug = slug
       try {
         sessionStorage.setItem('savedTabCache', JSON.stringify({ url: fullTab.url, tab: fullTab }))
@@ -136,7 +136,7 @@ export default function Home(): JSX.Element {
       const fullTab = parsed.tab
       if (fullTab) {
         if (fullTab.url?.startsWith('local://')) {
-          const slug = fullTab.url.replace('local://image-tab/', '')
+          const slug = fullTab.url.replace(/^local:\/\/[^/]+\//, '')
           fullTab.slug = slug
           try {
             sessionStorage.setItem('savedTabCache', JSON.stringify({ url: fullTab.url, tab: fullTab }))

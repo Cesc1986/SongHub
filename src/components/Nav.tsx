@@ -19,6 +19,7 @@ import { useRouter } from 'next/router'
 import { MutableRefObject, useEffect, useState } from 'react'
 import AutocompleteInput from './AutocompleteInput'
 import TabImporter from './TabImporter'
+import TextTabImporter from './TextTabImporter'
 import ImageTabUploader from './ImageTabUploader'
 
 export default function Nav({
@@ -94,6 +95,7 @@ export default function Nav({
                 />
                 <MenuList>
                   <TabImporter />
+                  <TextTabImporter />
                   <ImageTabUploader isOpen={isUploaderOpen} onClose={onUploaderClose} asMenuItem onMenuItemClick={onUploaderOpen} />
                   <ImageTabUploader isOpen={isCameraOpen} onClose={onCameraClose} cameraMode asCameraMenuItem onCameraMenuItemClick={onCameraOpen} />
                   {isAdmin && (
