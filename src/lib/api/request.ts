@@ -198,7 +198,7 @@ async function getSharedBrowser(): Promise<any> {
         '--password-store=basic',
         '--use-gl=swiftshader',
       ],
-      turnstile: true,
+      turnstile: false,
     })
 
     sharedBrowser = browser
@@ -235,30 +235,32 @@ export async function getPuppeteerConf(
     }
   }
 
-  await page.setViewport(
-    options.widthBrowser && options.heightBrowser
-      ? {
-          width: parseInt(options.widthBrowser) - 50,
-          height: parseInt(options.heightBrowser),
-        }
-      : { width: 1280, height: 800 },
-  )
-  // Block every ressources that we don't need to load
-  page.setDefaultNavigationTimeout(10000)
-  await page.setRequestInterception(true)
-  page.on('request', (request) => {
-    const requestUrl = request.url().split('?')[0]
-    if (
-      PUPPETEER_BLOCK_RESSOURCE_TYPE.includes(request.resourceType()) ||
-      PUPPETEER_BLOCK_RESSOURCE_NAME.some((resource) =>
-        requestUrl.includes(resource),
-      )
-    ) {
-      request.abort()
-    } else {
-      request.continue()
-    }
-  })
+  try {
+    await page.setViewport(
+      options.widthBrowser && options.heightBrowser
+        ? {
+            width: Math.max(1, parseInt(options.widthBrowser) - 50),
+            height: Math.max(1, parseInt(options.heightBrowser)),
+          }
+        : { width: 1280, height: 800 },
+    )
+    page.setDefaultNavigationTimeout(10000)
+    await page.setRequestInterception(true)
+    page.on('request', (request) => {
+      const requestUrl = request.url().split('?')[0]
+      if (
+        PUPPETEER_BLOCK_RESSOURCE_TYPE.includes(request.resourceType()) ||
+        PUPPETEER_BLOCK_RESSOURCE_NAME.some((resource) => requestUrl.includes(resource))
+      ) {
+        request.abort()
+      } else {
+        request.continue()
+      }
+    })
 
-  return { page, browser }
+    return { page, browser }
+  } catch (error) {
+    await page.close().catch(closeError => console.warn('Could not close unconfigured browser page', closeError))
+    throw error
+  }
 }

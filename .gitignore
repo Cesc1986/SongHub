@@ -23,12 +23,27 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# Local environment files (only commit the sanitized template)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+runtime.env
+*.local.env
+
+# Secrets, certificates, and keys
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Local data and deployment configuration
 saved-tabs/
-config/runtime-settings.json
+volumes/
+/config/runtime-settings.json
+/compose.vlan.yaml
+/local/
 *.swp

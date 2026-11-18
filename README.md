@@ -1,7 +1,7 @@
 # SongHub
 
 ![SongHub](https://img.shields.io/badge/SongHub-Private%20Tab%20Manager-2563eb?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-v1.7-16a34a?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.8-16a34a?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/stack-Next.js%20%2B%20ChakraUI-111827?style=for-the-badge)
 
 SongHub is a private song/tab workspace for musicians: search, save, organize, and prepare setlists in one place.
@@ -70,16 +70,9 @@ Then open:
 docker compose logs -f songhub
 ```
 
-## Release Notes (v1.7)
+## Release Notes (v1.8)
 
-Focus: admin optimizations + UI stability.
-
-- Admin access logging optimized to session-level (`session_start`) instead of noisy page-by-page entries
-- Change log now focuses on real song lifecycle events (create/delete), reducing save/rename noise
-- Setlist reordering hardened for mobile UX: drag works only via explicit handle to avoid accidental reorders while scrolling
-- Admin log presentation refined for better readability on small screens
-- Added a stricter release verification flow before declaring done (service active + `/login` and `/api/health` checks)
-- Footer version remains derived from `package.json`
+Tabs stay visible when background layout requests return empty results, and saved songs no longer need to be scraped again. See the [changelog](CHANGELOG.md) for details.
 
 ## Admin Center
 

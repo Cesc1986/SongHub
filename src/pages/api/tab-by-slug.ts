@@ -25,7 +25,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         tab.url === `local://image-tab/${slugStr}` ||
         tab.slug === `image-tab/${slugStr}`
       ) {
-        return res.status(200).json({ tab })
+        return res.status(200).json({ tab: {
+          ...tab,
+          savedAt: parsed.savedAt ?? tab.savedAt,
+          savedFilename: file,
+          marks: { A: Boolean(parsed.marks?.A), F: Boolean(parsed.marks?.F) },
+        } })
       }
     } catch {}
   }

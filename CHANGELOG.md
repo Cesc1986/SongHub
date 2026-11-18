@@ -1,5 +1,16 @@
 # SongHub Changelog
 
+## v1.8 - 2026-11-18
+
+- Keep a visible tab on screen if a background layout response is empty or belongs to a different song.
+- Open saved songs from their links without rescraping their content, while preserving saved metadata and musician marks.
+- Close scraper pages after successful and failed tab loads, and give a clear message when no playable tab can be loaded.
+- Add regression coverage for empty and stale layout responses, repeated song changes, and image tabs.
+
+No changes to authentication, credentials, the Docker runtime, stored data formats, or reverse proxy configuration are required for this release. Keep using your existing data mounts when rebuilding the container.
+
+---
+
 ## v1.7 - 2026-04-25
 
 ### ✨ Release Notes (Admin + UI)

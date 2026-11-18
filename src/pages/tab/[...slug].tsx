@@ -1,138 +1,60 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import TabPanel from '../../components/TabPanel'
 import Head from 'next/head'
 import useAppStateContext from '../../hooks/useAppStateContext'
-import { Tab } from '../../types/tabs'
 import { useRouter } from 'next/router'
-import { Fade, useToast } from '@chakra-ui/react'
+import { Alert, Fade } from '@chakra-ui/react'
+import { chooseTab, hasTabContent } from '../../lib/tab-rendering'
 
 export default function TabPage(): JSX.Element {
   const router = useRouter()
-  const slug = Array.isArray(router.query.slug)
-    ? router.query.slug.join('/')
-    : router.query.slug
+  const slug = Array.isArray(router.query.slug) ? router.query.slug.join('/') : router.query.slug
+  const { selectedTab, setSelectedTab, isLoadingTab, selectedTabContent, refetchTab,
+    isLoadingTabBackground, selectedTabContentBackground } = useAppStateContext()
 
-  const {
-    selectedTab,
-    setSelectedTab,
-    isLoadingTab,
-    selectedTabContent,
-    refetchTab,
-    isLoadingTabBackground,
-    selectedTabContentBackground,
-  } = useAppStateContext()
-
-  const toast = useToast()
-
-  const title = selectedTabContent
-    ? `${selectedTabContent.name} by ${selectedTabContent.artist} - Song Hub`
-    : 'Tab - Song Hub'
-
-  const [updatedResponsiveTab, setUpdatedResponsiveTab] =
-    useState<Tab>(selectedTabContent)
+  const displayedTab = useMemo(() => chooseTab(
+    selectedTab.url, selectedTabContent, selectedTabContentBackground,
+  ), [selectedTab.url, selectedTabContent, selectedTabContentBackground])
+  const loading = !hasTabContent(displayedTab?.htmlTab) &&
+    (isLoadingTab || isLoadingTabBackground || !selectedTab.url)
+  const title = displayedTab ? `${displayedTab.name} by ${displayedTab.artist} - Song Hub` : 'Tab - Song Hub'
 
   useEffect(() => {
     if (!slug) return
-
-    // 1. Check sessionStorage (navigation from saved list)
+    const remoteUrl = `https://tabs.ultimate-guitar.com/tab/${slug}`
+    const select = (url: string) => setSelectedTab(prev => prev.url === url ? prev : { ...prev, url })
     try {
-      const raw = sessionStorage.getItem('savedTabCache')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.tab?.url?.startsWith('local://')) {
-          setSelectedTab((prevState) => ({ ...prevState, url: parsed.tab.url }))
-          return
-        }
+      const cached = JSON.parse(sessionStorage.getItem('savedTabCache') || 'null')
+      if ((cached?.url === remoteUrl || cached?.url === `local://image-tab/${slug}`) && hasTabContent(cached.tab?.htmlTab)) {
+        select(cached.url)
+        return
       }
     } catch {}
 
-    // 2. Check if this slug belongs to a saved image-tab (e.g. after refresh)
-    fetch(`/api/tab-by-slug?slug=${encodeURIComponent(slug)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.tab?.url?.startsWith('local://')) {
-          try {
-            sessionStorage.setItem('savedTabCache', JSON.stringify({ url: data.tab.url, tab: data.tab }))
-          } catch {}
-          setSelectedTab((prevState) => ({ ...prevState, url: data.tab.url }))
-          setUpdatedResponsiveTab(data.tab)
+    const controller = new AbortController()
+    fetch(`/api/tab-by-slug?slug=${encodeURIComponent(slug)}`, { signal: controller.signal })
+      .then(r => r.json())
+      .then(data => {
+        if (controller.signal.aborted) return
+        if (data?.tab?.url && hasTabContent(data.tab.htmlTab)) {
+          const url = data.tab.url.startsWith('local://') ? data.tab.url : remoteUrl
+          const tab = { ...data.tab, url }
+          try { sessionStorage.setItem('savedTabCache', JSON.stringify({ url, tab })) } catch {}
+          select(url)
         } else {
-          setSelectedTab((prevState) => ({
-            ...prevState,
-            url: `https://tabs.ultimate-guitar.com/tab/${slug}`,
-          }))
+          select(remoteUrl)
         }
       })
-      .catch(() => {
-        setSelectedTab((prevState) => ({
-          ...prevState,
-          url: `https://tabs.ultimate-guitar.com/tab/${slug}`,
-        }))
-      })
+      .catch(() => { if (!controller.signal.aborted) select(remoteUrl) })
+    return () => controller.abort()
   }, [slug, setSelectedTab])
-
-  useEffect(() => {
-    if (!isLoadingTab) {
-      if (!isLoadingTabBackground) {
-        if (typeof selectedTabContentBackground !== 'undefined') {
-          setUpdatedResponsiveTab((prev) => ({
-            ...selectedTabContentBackground,
-            savedAt:
-              selectedTabContentBackground?.savedAt ||
-              prev?.savedAt ||
-              selectedTabContent?.savedAt,
-            savedFilename:
-              selectedTabContentBackground?.savedFilename ||
-              prev?.savedFilename ||
-              selectedTabContent?.savedFilename,
-            marks:
-              selectedTabContentBackground?.marks ||
-              prev?.marks ||
-              selectedTabContent?.marks,
-          }))
-        }
-      } else {
-        toast.closeAll()
-        toast({
-          description: 'Adapting view for your browser...🛠️',
-          status: 'info',
-          position: 'bottom',
-          duration: 3000,
-          isClosable: true,
-        })
-      }
-    }
-  }, [
-    selectedTabContentBackground,
-    isLoadingTabBackground,
-    toast,
-    isLoadingTab,
-  ])
-
-  useEffect(() => {
-    setUpdatedResponsiveTab((prev) => ({
-      ...selectedTabContent,
-      savedAt: selectedTabContent?.savedAt || prev?.savedAt,
-      savedFilename: selectedTabContent?.savedFilename || prev?.savedFilename,
-      marks: selectedTabContent?.marks || prev?.marks,
-    }))
-  }, [selectedTabContent])
 
   return (
     <>
-      <Head>
-        <title>{title}</title>
-      </Head>
-      <Fade
-        style={{ display: 'flex', flexGrow: '1', flexDirection: 'column' }}
-        in={true}
-      >
-        <TabPanel
-          isLoading={isLoadingTab || selectedTab.url == '' ? true : false}
-          selectedTab={selectedTab}
-          selectedTabContent={updatedResponsiveTab}
-          refetchTab={refetchTab}
-        />
+      <Head><title>{title}</title></Head>
+      <Fade style={{ display: 'flex', flexGrow: '1', flexDirection: 'column' }} in={true}>
+        {!loading && !hasTabContent(displayedTab?.htmlTab) && <Alert status="warning">Tab content could not be loaded. Reload to try again.</Alert>}
+        <TabPanel isLoading={loading} selectedTab={selectedTab} selectedTabContent={displayedTab} refetchTab={refetchTab} />
       </Fade>
     </>
   )

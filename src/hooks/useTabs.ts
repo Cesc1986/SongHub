@@ -1,13 +1,14 @@
 import { useQuery } from 'react-query'
 import { ApiResponseTab, Tab } from '../types/tabs'
+import { hasTabContent } from '../lib/tab-rendering'
 
 // Load from sessionStorage cache if available (for saved tabs — no Puppeteer needed)
-function getCachedTab(url: string): Tab | null {
+export function getCachedTab(url: string): Tab | null {
   try {
     const raw = sessionStorage.getItem('savedTabCache')
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (parsed.url === url) {
+    if (parsed.url === url && parsed.tab?.url === url && hasTabContent(parsed.tab.htmlTab)) {
       // Keep cache entry so background hook can also detect and skip network fetch
       return parsed.tab as Tab
     }
@@ -22,15 +23,17 @@ export const getDatasTab = async (
   signal: AbortSignal,
 ): Promise<Tab> => {
   const response = await fetch(
-    `/api/tab?q=${url}&width=${Math.ceil(
+    `/api/tab?q=${encodeURIComponent(url)}&width=${Math.ceil(
       widthBrowser * (1 - (fontSize - 100) / 100),
     )}&height=${Math.ceil(
       document.documentElement.clientHeight * (1 - (fontSize - 100) / 100),
     )}`,
     { signal },
   )
+  if (!response.ok) throw new Error(`Tab request failed (${response.status})`)
   const parsedResponse: ApiResponseTab = await response.json()
-  return parsedResponse.tab
+  if (!hasTabContent(parsedResponse.tab?.htmlTab)) throw new Error('No playable tab content was returned')
+  return { ...parsedResponse.tab, url }
 }
 
 export default function useTabs(
@@ -45,15 +48,16 @@ export default function useTabs(
   // Check sessionStorage for a cached saved tab
   const cachedTab = typeof window !== 'undefined' ? getCachedTab(url) : null
 
-  return useQuery(
+  const query = useQuery(
     ['getTab', url],
     async ({ signal }) => getDatasTab(url, fontSize, widthBrowser, signal),
     {
       // Skip network fetch if we have an imported tab or a sessionStorage cache hit
-      enabled: !isImported && !cachedTab && !isLocalUrl && url.length > 0,
+      enabled: !isImported && !cachedTab && !isLocalUrl && url.length > 0 && widthBrowser > 0,
       initialData: cachedTab ?? (isImported ? importedTab : undefined),
       initialDataUpdatedAt: (cachedTab || isImported) ? Date.now() : undefined,
       staleTime: (cachedTab || isImported) ? Infinity : 0,
     },
   )
+  return cachedTab ? { ...query, data: cachedTab, isLoading: false } : query
 }

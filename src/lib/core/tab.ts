@@ -10,6 +10,7 @@ import { TAB_TYPES_VALUES } from '../../constants'
 import { ApiResponseSearch } from '../../types/tabs'
 import { getPuppeteerConf } from '../api/request'
 import sanitizeHtml from 'sanitize-html'
+import { hasTabContent } from '../tab-rendering'
 
 export function validateType(type: string): string {
   if (type in TAB_TYPES_VALUES) {
@@ -108,7 +109,7 @@ export async function getTab(
   height?: string,
 ): Promise<ApiResponseTab> {
   const getTabinfo = async () => {
-    const { page, browser } = await getPuppeteerConf({
+    const { page } = await getPuppeteerConf({
       widthBrowser: width,
       heightBrowser: height,
     })
@@ -182,11 +183,9 @@ export async function getTab(
           chordsDiagrams,
         }
       })
-      // await page.close()
-      return { tabInfos: tabParsed, page: page, browser: browser }
-    } catch (error) {
-      console.log(error)
-      await page.close()
+      return tabParsed
+    } finally {
+      await page.close().catch(error => console.warn('Could not close tab metadata page', error))
     }
   }
 
@@ -210,30 +209,18 @@ export async function getTab(
       const tabResponsive: string = await page.evaluate(() => {
         return document.querySelector('pre')?.outerHTML || ''
       })
-      // await page.close()
-      return {
-        htmlTab: sanitizeHtml(tabResponsive, {
-          allowedAttributes: {
-            span: ['class'],
-          },
-        }),
-        page: page,
-        browser: browser,
-      }
-    } catch (error) {
-      await page.close()
-      console.log(error)
+      return sanitizeHtml(tabResponsive, { allowedAttributes: { span: ['class'] } })
+    } finally {
+      await page.close().catch(error => console.warn('Could not close responsive tab page', error))
     }
   }
-  const [tabParsed, tabResponsive] = await Promise.all([
+  const [tabParsed, tabResponsive] = await Promise.allSettled([
     getTabinfo(),
     getResponsiveTab(),
   ])
 
-  // Close browsers when both requests completed to prevent an issue with "puppeteer-real-browser" on Linux
-  await tabParsed.page?.close()
-  await tabResponsive?.page?.close()
-
-  tabParsed.tabInfos.htmlTab = tabResponsive?.htmlTab
-  return { tab: tabParsed.tabInfos }
+  if (tabParsed.status === 'rejected') throw tabParsed.reason
+  if (tabResponsive.status === 'rejected') throw tabResponsive.reason
+  if (!hasTabContent(tabResponsive.value)) throw new Error('No playable tab content was returned')
+  return { tab: { ...tabParsed.value, htmlTab: tabResponsive.value } }
 }
