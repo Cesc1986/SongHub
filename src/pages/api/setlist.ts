@@ -31,8 +31,8 @@ function saveSetlists(setlists: Setlist) {
   fs.writeFileSync(SETLIST_FILE, JSON.stringify(setlists, null, 2))
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const auth = getAuthFromRequest(req)
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const auth = await getAuthFromRequest(req)
   const actor = auth.username || 'unknown'
   const role = auth.role
   const ip = getClientIp(req)

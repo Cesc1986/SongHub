@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+if [[ -z ${SONGHUB_LOGIN_USERNAME:-} || -z ${SONGHUB_LOGIN_PASSWORD:-} ]]; then
+  echo '[start.sh] Set SONGHUB_LOGIN_USERNAME and SONGHUB_LOGIN_PASSWORD.' >&2
+  exit 1
+fi
+session_secret=${SONGHUB_SESSION_SECRET:-}
+if (( ${#session_secret} < 32 )); then
+  echo '[start.sh] Set SONGHUB_SESSION_SECRET to a private key of at least 32 characters.' >&2
+  exit 1
+fi
+unset session_secret
+
 echo "[start.sh] Cleaning up stale Xvfb lock files..."
 rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
 

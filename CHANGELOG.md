@@ -1,5 +1,11 @@
 # SongHub Changelog
 
+## v1.9 - 2026-11-18
+
+- Replace unsigned login cookies with signed, expiring sessions and verify roles on protected routes. Constrain post-login redirects to SongHub.
+- Remove built-in Compose credentials and require a private session key. Upgrade to Node.js 24 LTS and Next.js 15.5.29.
+- **Upgrade from v1.8:** back up and reuse the existing saved-tabs mount. Set your credentials explicitly and configure a stable `SONGHUB_SESSION_SECRET` (generate it with `openssl rand -hex 32`). Users sign in again. No data migration, mount ownership change, or reverse-proxy change is required for the stock Compose setup.
+
 ## v1.8 - 2026-11-18
 
 - Keep a visible tab on screen if a background layout response is empty or belongs to a different song.

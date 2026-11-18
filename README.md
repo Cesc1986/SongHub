@@ -25,17 +25,18 @@ Configure login credentials via environment variables:
 
 ```env
 # Shared app login
-SONGHUB_LOGIN_USERNAME=user
-SONGHUB_LOGIN_PASSWORD=passwort
+SONGHUB_LOGIN_USERNAME=
+SONGHUB_LOGIN_PASSWORD=
+SONGHUB_SESSION_SECRET=
 
 # Admin login (required for /admin page)
-SONGHUB_ADMIN_USERNAME=admin
-SONGHUB_ADMIN_PASSWORD=admin-passwort
+SONGHUB_ADMIN_USERNAME=
+SONGHUB_ADMIN_PASSWORD=
 ```
 
 For Docker Compose:
 - Copy `.env.example` to `.env`
-- Adjust username/password in `.env`
+- Set your login and admin credentials explicitly in `.env`; generate the session key with `openssl rand -hex 32`.
 - `docker-compose.yml` passes these variables into the container at runtime
 
 ## Deployment (Docker Compose)
@@ -70,9 +71,9 @@ Then open:
 docker compose logs -f songhub
 ```
 
-## Release Notes (v1.8)
+## Release Notes (v1.9)
 
-Tabs stay visible when background layout requests return empty results, and saved songs no longer need to be scraped again. See the [changelog](CHANGELOG.md) for details.
+Signed sessions replace the old login cookies. Before upgrading, set a private `SONGHUB_SESSION_SECRET`. Users sign in again; keep the same data mount and proxy. See the [changelog](CHANGELOG.md) for details.
 
 ## Admin Center
 

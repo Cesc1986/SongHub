@@ -1,9 +1,11 @@
 import type { NextApiRequest } from 'next'
+import { verifySession } from './session'
 
 export type UserRole = 'user' | 'admin'
 
 export const AUTH_COOKIE_NAME = 'songhub_auth'
-export const AUTH_COOKIE_VALUE = 'ok'
+
+export const SESSION_SECRET = process.env.SONGHUB_SESSION_SECRET ?? ''
 export const AUTH_ROLE_COOKIE_NAME = 'songhub_role'
 export const AUTH_USER_COOKIE_NAME = 'songhub_user'
 
@@ -53,23 +55,16 @@ export const isValidCredentials = (username?: string, password?: string): boolea
   return resolveCredentials(username, password).valid
 }
 
-export const getAuthFromRequest = (req: NextApiRequest): {
+export const getAuthFromRequest = async (req: NextApiRequest): Promise<{
   isAuthed: boolean
   role: UserRole
   username: string
-} => {
-  const authCookie = req.cookies?.[AUTH_COOKIE_NAME]
-  const roleCookie = req.cookies?.[AUTH_ROLE_COOKIE_NAME]
-  const userCookie = req.cookies?.[AUTH_USER_COOKIE_NAME]
-
-  const isAuthed = authCookie === AUTH_COOKIE_VALUE
-  const role: UserRole = roleCookie === 'admin' ? 'admin' : 'user'
-  const username = userCookie || ''
-
-  return { isAuthed, role, username }
+}> => {
+  const session = await verifySession(req.cookies?.[AUTH_COOKIE_NAME], SESSION_SECRET)
+  return { isAuthed: Boolean(session), role: session?.role ?? 'user', username: session?.username ?? '' }
 }
 
-export const isAdminRequest = (req: NextApiRequest): boolean => {
-  const auth = getAuthFromRequest(req)
+export const isAdminRequest = async (req: NextApiRequest): Promise<boolean> => {
+  const auth = await getAuthFromRequest(req)
   return auth.isAuthed && auth.role === 'admin'
 }

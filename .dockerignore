@@ -4,4 +4,12 @@ node_modules
 saved-tabs
 *.log
 .env
-.env*.local
+.env.*
+local
+compose.vlan.yaml
+secrets
+**/secrets
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx

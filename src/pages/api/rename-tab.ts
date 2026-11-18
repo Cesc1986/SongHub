@@ -6,8 +6,8 @@ import { getClientIp } from '../../lib/audit'
 
 const SAVED_DIR = path.join(process.cwd(), 'saved-tabs')
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const auth = getAuthFromRequest(req)
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const auth = await getAuthFromRequest(req)
   const actor = auth.username || 'unknown'
   const role = auth.role
   const ip = getClientIp(req)

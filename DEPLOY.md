@@ -5,13 +5,16 @@
 Create a `.env` file in the same folder as `docker-compose.yml`:
 
 ```env
-SONGHUB_LOGIN_USERNAME=user
-SONGHUB_LOGIN_PASSWORD=passwort
-SONGHUB_ADMIN_USERNAME=admin
-SONGHUB_ADMIN_PASSWORD=admin-passwort
+SONGHUB_LOGIN_USERNAME=
+SONGHUB_LOGIN_PASSWORD=
+SONGHUB_ADMIN_USERNAME=
+SONGHUB_ADMIN_PASSWORD=
+SONGHUB_SESSION_SECRET=
 ```
 
-> You can copy `.env.example` and adjust the values.
+> Copy `.env.example` for a fresh install only. Use `openssl rand -hex 32` to generate a private session key. Keep it stable across restarts and never commit it.
+
+Upgrading from v1.8: back up the existing `/app/saved-tabs` mount, including hidden files. Keep the same mount, Compose project and reverse proxy. Set credentials explicitly (there are no fallback passwords); if these are already private, keep the same values. If you use a custom Compose file, pass `SONGHUB_SESSION_SECRET` into the container. Users must sign in again. No data migration or change of container UID is required for stock Compose.
 
 ## 2) Start / update SongHub
 

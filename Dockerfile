@@ -1,4 +1,4 @@
-FROM node:20-slim AS builder
+FROM node:24-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -6,10 +6,10 @@ COPY package.json package-lock.json* yarn.lock* ./
 RUN npm ci --legacy-peer-deps
 
 COPY . .
-RUN npm run build
+RUN npm run build && rm -rf .next/cache
 
 # ── Runtime stage ──────────────────────────────────────────
-FROM node:20-slim AS runner
+FROM node:24-bookworm-slim AS runner
 
 WORKDIR /app
 
@@ -50,7 +50,7 @@ COPY --from=builder /app/src ./src
 COPY start.sh ./start.sh
 RUN chmod +x start.sh
 
-RUN mkdir -p /app/saved-tabs && \
+RUN install -d -o node -g node -m 0700 /app/saved-tabs && \
     ln -sf /usr/bin/chromium /usr/bin/chromium-browser && \
     ln -sf /usr/bin/chromium /usr/bin/google-chrome
 

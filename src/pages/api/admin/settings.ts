@@ -5,8 +5,8 @@ import {
   setMusicianMarkingEnabled,
 } from '../../../lib/settings'
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!isAdminRequest(req)) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!(await isAdminRequest(req))) {
     return res.status(403).json({ error: 'Forbidden' })
   }
 

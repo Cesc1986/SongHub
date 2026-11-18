@@ -10,7 +10,8 @@ export default function LoginPage(): JSX.Element {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const nextPath = typeof router.query.next === 'string' ? router.query.next : '/'
+  const requested = router.query.next
+  const nextPath = requested === '/admin' ? '/admin' : '/'
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()

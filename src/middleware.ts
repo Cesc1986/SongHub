@@ -2,9 +2,9 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import {
   AUTH_COOKIE_NAME,
-  AUTH_COOKIE_VALUE,
-  AUTH_ROLE_COOKIE_NAME,
+  SESSION_SECRET,
 } from './lib/auth'
+import { verifySession } from './lib/session'
 
 const PUBLIC_PATHS = [
   '/api/auth/login',
@@ -13,22 +13,20 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
 ]
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/static') ||
-    pathname.includes('.') ||
+    pathname.startsWith('/_next/static/') ||
+    pathname.startsWith('/static/') ||
     PUBLIC_PATHS.some((path) => pathname === path)
   ) {
     return NextResponse.next()
   }
 
-  const authCookie = req.cookies.get(AUTH_COOKIE_NAME)?.value
-  const roleCookie = req.cookies.get(AUTH_ROLE_COOKIE_NAME)?.value
-  const isAuthed = authCookie === AUTH_COOKIE_VALUE
-  const isAdmin = roleCookie === 'admin'
+  const session = await verifySession(req.cookies.get(AUTH_COOKIE_NAME)?.value, SESSION_SECRET)
+  const isAuthed = Boolean(session)
+  const isAdmin = session?.role === 'admin'
 
   if (pathname === '/login') {
     if (isAuthed) {
