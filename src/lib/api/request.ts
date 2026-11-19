@@ -24,11 +24,13 @@ export async function search(args: ApiArgsSearch): Promise<ApiResponseSearch> {
 }
 
 export function formatRequestSearch(uri: string): ApiRequestSearch {
-  uri = decodeURIComponent(uri)
+  // parse with URL/URLSearchParams so both '%20' and '+' are treated as spaces,
+  // same as the query string a real form submit (or the UG website) produces
+  let parsedUrl = new URL(uri, 'http://localhost')
 
   let output: ApiRequestSearch = {
-    url: uri,
-    type: '',
+    url: decodeURIComponent(uri),
+    type: parsedUrl.pathname.slice(1),
     args: {
       q: '',
       type: 'Tab',
@@ -39,36 +41,34 @@ export function formatRequestSearch(uri: string): ApiRequestSearch {
     },
   }
 
-  output.type = /^\/(.*)\?/.exec(uri)![1]
-  let raw = uri
-    .slice(uri.indexOf(output.type) + output.type.length + 1, uri.length)
-    .split('&')
+  parsedUrl.searchParams.forEach((value, key) => {
+    output.args[key] = value
+  })
 
-  for (let i in raw) {
-    let keyVal = raw[i].split('=')
-    if (keyVal.length == 2) {
-      output.args[keyVal[0]] = keyVal[1]
-    }
-  }
   return output
 }
 
-export function encodeParam(key: string, value: any[]): string {
+export function encodeParam(
+  searchParams: URLSearchParams,
+  key: string,
+  value: any[],
+): void {
   if (Array.isArray(value)) {
-    return value.map((item) => encodeParam(`${key}[]`, item)).join('&')
+    value.forEach((item) => encodeParam(searchParams, `${key}[]`, item))
   } else {
-    return key + '=' + encodeURIComponent(value)
+    searchParams.append(key, value)
   }
 }
 
 export function encodeParams(params: Record<string, any>): string {
-  // encode everything
-  return Object.keys(params)
-    .map((key: string) => {
-      return encodeParam(key, params[key])
-    })
-    .join('&')
-    .replace(/%20/g, '+')
+  // encode everything the same way the UG website's own form submit does
+  // (spaces as '+', everything else percent-escaped) by using URLSearchParams
+  let searchParams = new URLSearchParams()
+  Object.keys(params).forEach((key: string) => {
+    encodeParam(searchParams, key, params[key])
+  })
+  // URLSearchParams escapes '[]' in array keys (e.g. 'type[]'), but UG expects them literal
+  return searchParams.toString().replace(/%5B%5D/g, '[]')
 }
 
 export function formatSearchQuery(args: ApiArgsSearch): ApiArgsSearch {
